@@ -87,7 +87,12 @@
 .le-clause-list { display: grid; gap: 4px; max-height: 280px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
 .le-clause-list button { width: 100%; padding: 4px 8px; border: 1px solid #d0d4da; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; font: inherit; font-size: 12px; }
 .le-clause-list button:hover:not(:disabled) { background: #f3f5f8; }
-.le-clause-list small { margin-right: 6px; color: #3a56b4; }
+.le-clause-cats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+.le-clause-cats button { padding: 2px 8px; border: 1px solid #d0d4da; border-radius: 999px; background: #fff; cursor: pointer; font: inherit; font-size: 12px; }
+.le-clause-cats button span { color: #888; }
+.le-clause-cats button[aria-pressed="true"] { border-color: #3a56b4; background: #eef2ff; color: #1d3f94; }
+.le-clause-group { margin-top: 6px; color: #3a56b4; font-size: 11px; font-weight: 600; }
+.le-clause-group:first-child { margin-top: 0; }
 
 @media (max-width: 800px) {
   .le-root { grid-template-columns: 1fr; }

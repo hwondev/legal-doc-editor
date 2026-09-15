@@ -8,7 +8,7 @@ export { calcStampFee, calcPaymentOrderStampFee, calcServiceFee, withCourtFees, 
 export type { CourtFeeOptions, Procedure } from './fees'
 export { toKoreanAmount, formatAmount, parseAmount } from './amount'
 export { templates } from './templates'
-export { clauses } from './clauses'
+export { clauses, groupClauses } from './clauses'
 export type { Clause } from './clauses'
 export type { Template } from './templates'
 export type { Values } from './variable'

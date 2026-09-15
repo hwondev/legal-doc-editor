@@ -6,6 +6,18 @@ export interface Clause {
   html: string
 }
 
+/** 분류별로 묶음 (분류 순서는 목록에 처음 나온 순). category를 주면 그 분류만, query는 분류·제목에서 찾음. 빈 묶음은 뺌 */
+export function groupClauses(list: Clause[], { category = '', query = '' }: { category?: string; query?: string } = {}): [string, Clause[]][] {
+  const q = query.trim()
+  const groups = new Map<string, Clause[]>()
+  for (const c of list) {
+    if (category && c.category !== category) continue
+    if (q && !`${c.category} ${c.title}`.includes(q)) continue
+    groups.set(c.category, [...(groups.get(c.category) ?? []), c])
+  }
+  return [...groups]
+}
+
 /*
  * 계약서에 자주 쓰는 일반 조항. 문장은 새로 썼고, 사건마다 달라지는 값은 {{변수}}로 둔다.
  * 확인하지 않은 법률 수치(이율·기간 등)는 넣지 않는다.
