@@ -43,14 +43,14 @@ export const templates: Template[] = [
 <p data-num="1">당사자의 관계</p>
 <p>원고와 피고는 {{당사자 관계}} 사이입니다.</p>
 <p data-num="1">돈을 빌려준 사실</p>
-<p>원고는 {{대여일}} 피고에게 {{청구금액}}을 변제기 {{변제기}}로 정하여 빌려주었습니다.</p>
+<p>원고는 {{대여일}} 피고에게 {{청구금액}}을 변제기 {{변제기}}로 정하여 빌려주었습니다(<span data-evidence-ref="loan-note">갑 제1호증</span> 차용증, <span data-evidence-ref="loan-transfer">갑 제2호증</span> 계좌이체 내역).</p>
 <p data-num="1">피고가 갚지 않은 사실</p>
 <p>피고는 변제기가 지났는데도 원고의 여러 차례 요구에도 위 돈을 갚지 않고 있습니다.</p>
 <p data-num="1">결론</p>
 <p>따라서 원고는 피고에게 위 대여금과 이에 대하여 변제기 다음 날부터 이 사건 소장 부본 송달일까지는 민법이 정한 연 5%의, 그 다음 날부터 다 갚는 날까지는 소송촉진 등에 관한 특례법이 정한 연 12%의 각 비율로 계산한 지연손해금의 지급을 구합니다.</p>
 <h3>입 증 방 법</h3>
-<p data-num="1" data-evidence="갑">차용증</p>
-<p data-num="1" data-evidence="갑">계좌이체 내역</p>
+<p data-num="1" data-evidence="갑" data-evidence-id="loan-note">차용증</p>
+<p data-num="1" data-evidence="갑" data-evidence-id="loan-transfer">계좌이체 내역</p>
 <h3>첨 부 서 류</h3>
 <p data-num="1">위 입증방법 각 1통</p>
 <p data-num="1">소장 부본 1통</p>

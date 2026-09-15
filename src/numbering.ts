@@ -75,11 +75,15 @@ export const Numbering = Extension.create({
       },
       Enter: () => {
         const { num, evidence } = attrs()
-        return (
-          !!(num || evidence) &&
-          this.editor.state.selection.$from.parent.content.size === 0 &&
-          this.editor.commands.updateAttributes('paragraph', { num: null, evidence: null })
-        )
+        const { empty, $from } = this.editor.state.selection
+        if (!(num || evidence) || !empty) return false
+        if ($from.parent.content.size === 0) return this.editor.commands.updateAttributes('paragraph', { num: null, evidence: null })
+        // 호증 문단 맨 앞에서 Enter → 위에 빈 호증 문단을 넣음. 그냥 나누면 id가 빈 윗문단에 남아 본문 참조가 엉뚱한 증거를 가리킴
+        if (evidence && $from.parentOffset === 0) {
+          const pos = $from.before()
+          return this.editor.chain().insertContentAt(pos, { type: 'paragraph', attrs: { num, evidence } }).setTextSelection(pos + 1).run()
+        }
+        return false
       },
     }
   },

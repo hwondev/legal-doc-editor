@@ -47,6 +47,10 @@
 .legal-doc > p[data-evidence="병"]::before { counter-increment: le-ev3; }
 .legal-doc > p[data-evidence]::before { content: var(--le-ev); }
 .legal-doc > p[data-num][data-evidence]::before { content: var(--le-num) '\a0' var(--le-ev); }
+/* 본문 호증 참조(evidence.ts): 증거 번호를 따라 글자가 바뀜. 가리키던 증거가 없으면 빨간 밑줄 */
+.legal-doc .le-ref { border-bottom: 1px dotted #9aa5b1; }
+.legal-doc .le-ref[data-missing] { border-bottom: 2px solid #d9534f; color: #b52b27; }
+.legal-doc .le-ref.ProseMirror-selectednode { background: #e5edff; }
 /* 판례·법령 인용 — 본문 데이터는 그대로 두고 화면에서만 밑줄·링크를 덧입힘 (citation.ts) */
 .legal-doc .le-cite { color: inherit; text-decoration: underline dotted #3a56b4; text-underline-offset: 3px; cursor: pointer; }
 .legal-doc .le-cite:hover { background: #eef2ff; }
@@ -111,6 +115,7 @@
   .le-printing .legal-doc { position: absolute; top: 0; left: 0; width: 100%; max-width: none; padding: 0; box-shadow: none; }
   .le-printing .le-var { padding: 0; background: none; color: inherit; }
   .le-printing .le-cite { text-decoration: none; background: none; }
+  .le-printing .le-ref { border: 0; color: inherit; background: none; }
   /* 빈 값은 손으로 쓰는 밑줄 칸 */
   .le-printing .le-var--empty { color: transparent; border-bottom: 1px solid #000; }
 }
