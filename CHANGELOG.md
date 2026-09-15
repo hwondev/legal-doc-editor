@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-09-16
+
 ### Added
 
 - 템플릿 검색 — 오른쪽 패널의 **템플릿** 목록에서 이름으로 찾고 분류 칩(개수 표시)으로 좁힘. 조항 라이브러리와 같은 목록을 씀
@@ -199,7 +201,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.21.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.22.0...HEAD
+[0.22.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.18.0...v0.19.0
