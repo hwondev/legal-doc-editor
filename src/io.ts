@@ -35,6 +35,14 @@ function flatten(doc: JSONContent, values: Values): Block[] {
       return { text: n.text ?? '', bold: marks.has('bold'), italics: marks.has('italic'), strike: marks.has('strike'), underline: marks.has('underline') }
     })
   const bold = (rs: Run[]) => rs.map((r) => ({ ...r, bold: true }))
+  const evidence: Record<string, number> = {} // 호증 번호: 당사자(갑·을·병)별로 문서 전체에서 이어 셈 (legal.css와 같은 규칙)
+  // 문단 글자. 호증 문단이면 "갑 제N호증 "을 앞에 박음
+  const para = (n: JSONContent): Run[] => {
+    const party: string | undefined = n.attrs?.evidence
+    if (!party) return runs(n.content)
+    evidence[party] = (evidence[party] ?? 0) + 1
+    return [{ text: `${party} 제${evidence[party]}호증 ` }, ...runs(n.content)]
+  }
 
   const list = (node: JSONContent, depth: number) =>
     node.content?.forEach((li, i) =>
@@ -59,8 +67,8 @@ function flatten(doc: JSONContent, values: Values): Block[] {
       else if (num) {
         counts[num]++
         counts.fill(0, num + 1)
-        out.push({ kind: 'para', label: numLabel(num, counts[num]), depth: num, runs: runs(n.content) })
-      } else if (n.type === 'paragraph') out.push({ kind: 'para', label: '', depth: 0, runs: runs(n.content) })
+        out.push({ kind: 'para', label: numLabel(num, counts[num]), depth: num, runs: para(n) })
+      } else if (n.type === 'paragraph') out.push({ kind: 'para', label: '', depth: 0, runs: para(n) })
       else if (n.type === 'table')
         out.push({
           kind: 'table',
@@ -209,6 +217,9 @@ const isSection = (t: string) => t.length <= 20 && (/^[가-힣](\s+[가-힣]){3,
 // [ 관할 법원 ] 같은 빈칸 표시 → {{관할 법원}} 변수. 숫자·=가 든 대괄호([= 계산식] 등)는 그대로 둠
 // ponytail: 휴리스틱. 본문에 [짧은 한글] 표기를 쓰는 문서면 오인할 수 있음
 const PLACEHOLDER = /\[\s*([^[\]{}<>"\d=]{1,20}?)\s*\]/g
+// 입증방법 아래 "갑 제N호증". 가지번호(제1호증의 1, 제2호증 1내지 5)·범위(제1호증 내지 제3호증, 제1호증, 제2호증)는 번호를 매기면 뜻이 바뀌어 제외
+const EVIDENCE = /^\s*([갑을병])\s*제\s*(\d+)\s*호증(?!\s*(?:의|내지|[~～,\d]))\s*/
+const EVIDENCE_SECTIONS = /^(입증방법|증명방법|증거방법)$/
 
 const NUM_MARKERS: [RegExp, (s: string) => number][] = [
   [/^\s*(\d{1,2})\.(?!\d)\s*/, Number], // 1.  (2026. 같은 연도는 제외)
@@ -280,6 +291,7 @@ function stripPrefix(el: Element, re: RegExp | number) {
  * - 빈 줄 문단 제거, 짧은 첫 줄 → 제목(h1), "청 구 취 지" 같은 소제목 → h3, [빈칸] → {{변수}}
  * - "제N조…" → 조(h2), 연속된 "①…" → 항(ol), 항 바로 뒤 "1. …" → 호(중첩 ol)
  * - 소장식 "1. / 가. / (1) / (가)" → 번호 문단(p[data-num]). 원문 번호가 자동 번호와 같을 때만 바꿈
+ * - 입증방법 아래 "갑 제N호증" → 호증 문단(p[data-evidence]). 역시 자동 번호와 같을 때만
  * ponytail: 원문 조 번호는 버리고 자동 번호로 다시 매김 (제3조의2 같은 가지번호는 순번으로 바뀜).
  *           "1)·가)" 형식은 아직 글자로 둠
  */
@@ -306,6 +318,8 @@ export function normalizeLegalHtml(html: string) {
   let ol: HTMLOListElement | null = null
   const counts = [0, 0, 0, 0, 0] // 번호 문단 단계별 현재 번호 (flatten·legal.css와 같은 규칙)
   const runs = [0, 0, 0, 0, 0] // 단계별로 글자로 둔 채 이어지는 번호 (1.부터 다시 시작한 하위 목록)
+  const evidence: Record<string, number> = {} // 당사자별 호증 번호 (flatten·legal.css와 같은 규칙: 문서 전체에서 이어 셈)
+  let inEvidence = false // 입증방법 소제목 아래인지
   for (const el of [...doc.body.children]) {
     const text = el.textContent ?? ''
     // 한글 문서는 "○○경찰서      귀중"처럼 공백으로 줄을 맞춤 → 에디터처럼 한 칸으로 줄여서 판정 (다시 열어도 결과가 같게)
@@ -317,7 +331,9 @@ export function normalizeLegalHtml(html: string) {
       ol = null
       counts.fill(0)
       runs.fill(0)
+      inEvidence = EVIDENCE_SECTIONS.test(oneLine.replace(/\s/g, ''))
     } else if (el.tagName === 'P' && ARTICLE.test(text)) {
+      inEvidence = false
       stripPrefix(el, ARTICLE)
       // "제1조(목적) 이 계약은…"처럼 제목과 본문이 한 문단이면 제목만 조(h2)로, 본문은 바로 다음 문단으로 (서식 유지)
       const h2 = doc.createElement('h2')
@@ -353,11 +369,19 @@ export function normalizeLegalHtml(html: string) {
       sub.append(li)
     } else {
       ol = null
-      const m = el.tagName === 'P' ? parseNumMarker(text) : null
-      if (!m) continue
+      if (/^H[1-3]$/.test(el.tagName)) {
+        // 이미 제목 태그로 온 소제목(워드 제목 스타일 등)에서도 번호를 1부터 다시 (flatten과 같은 규칙)
+        counts.fill(0)
+        runs.fill(0)
+        inEvidence = EVIDENCE_SECTIONS.test(oneLine.replace(/\s/g, ''))
+      }
+      if (el.tagName !== 'P') continue
+      const m = parseNumMarker(text)
       // 원문 번호가 자동으로 매길 번호와 딱 맞을 때만 변환 → 화면 번호가 원문과 항상 같음
       // (당사자란 "2. 이○○"처럼 중간부터 시작하거나 건너뛴 번호는 뜻이 바뀌니 글자로 둠)
-      if (runs[m.level] && m.n === runs[m.level] + 1) {
+      if (!m) {
+        // 번호 표시 없는 문단
+      } else if (runs[m.level] && m.n === runs[m.level] + 1) {
         runs[m.level]++ // "가." 아래에서 1.부터 다시 쓴 하위 목록이 이어지는 중 → 계속 글자로 (3.이 1단계로 오인되지 않게)
       } else if (m.n === counts[m.level] + 1) {
         counts[m.level]++
@@ -367,6 +391,13 @@ export function normalizeLegalHtml(html: string) {
         el.setAttribute('data-num', String(m.level))
       } else {
         runs[m.level] = m.n === 1 ? 1 : 0
+      }
+      // 번호 표시를 뗀 뒤 "갑 제N호증"으로 시작하면 호증 문단으로. 번호가 글자로 남은 문단은 "3. 갑…"이라 걸리지 않음
+      const ev = inEvidence ? el.textContent!.match(EVIDENCE) : null
+      if (ev && Number(ev[2]) === (evidence[ev[1]] ?? 0) + 1) {
+        evidence[ev[1]] = Number(ev[2])
+        stripPrefix(el, ev[0].length)
+        el.setAttribute('data-evidence', ev[1])
       }
     }
   }

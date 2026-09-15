@@ -5,6 +5,7 @@
 계약서·합의서 같은 **법률문서를 만드는 React 에디터**입니다.
 
 - **조·항·호 자동 번호**: 조를 넣거나 옮기면 제1조, ①, 1. 번호가 알아서 다시 매겨져요
+- **입증방법 호증 번호**: `갑 제1호증`, `갑 제2호증`… 증거를 중간에 넣거나 빼도 호증 번호가 알아서 다시 매겨져요
 - **`{{변수}}` 채우기**: 본문에 `{{갑}}`을 입력하면 입력칸이 생기고, 값을 넣으면 문서에 반영돼요
 - **한글(.hwp·.hwpx)·Word(.docx·.doc) 열기·저장**: 일반 문단으로 쓴 계약서도 "제N조", "①", "1." 패턴을 인식해서 조·항·호 구조로 바꿔요. "제1조(목적) 이 계약은…"처럼 한 줄에 붙은 조는 제목과 본문으로 나눠요
   - 저장은 `.docx`, `.hwpx`, `.hwp`(HWP 5.0)예요. `.hwpx`는 한글 2014 이상에서 열려요
@@ -50,10 +51,13 @@ export default function Page() {
 | `h2` | 조 | 제N조 |
 | `h3` | 소제목 (청구취지·고소이유 등) | 가운데 정렬 |
 | `p[data-num="1"~"4"]` | 번호 문단 (소장식) | 1. → 가. → (1) → (가), 제목·조·소제목마다 1부터 |
+| `p[data-evidence="갑"\|"을"\|"병"]` | 호증 문단 (입증방법) | 갑 제1호증 → 갑 제2호증, 당사자별로 문서 전체에서 이어 셈. 번호 문단과 함께 쓰면 `1. 갑 제1호증` |
 | `table` | 표 | 표 |
 | `ol > li` | 항 | ①, ② |
 | `ol ol > li` | 호 | 1., 2. |
 | `span[data-var]` 또는 `{{이름}}` | 변수 | 입력값 |
+
+툴바 **호증** 버튼은 누를 때마다 갑 → 을 → 해제로 바뀌고, 호증 문단 끝에서 Enter를 누르면 다음 호증이 이어져요. 파일을 열 때는 입증방법·증명방법·증거방법 소제목 아래의 `갑 제N호증`이 차례대로일 때만 호증 문단으로 바꿔요. `갑 제1호증의 1` 같은 가지번호, `내지`로 묶은 줄, 본문 속 `(갑 제1호증)` 참조는 글자로 두니 번호가 바뀌면 직접 고쳐 주세요.
 
 ### 판례·법령 인용
 
@@ -157,9 +161,9 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 | `toHwp(editor.getJSON(), values, { wasm })` | `.hwp`(HWP 5.0) Blob 생성. `wasm`은 WASM 주소나 바이트(선택) |
 | `toPlainHtml(editor.getJSON(), values)` | 번호가 텍스트로 들어간 독립 HTML |
 | `fromFile(file)` | `.docx` / `.doc` / `.hwp` / `.hwpx`를 에디터용 HTML로 변환 (`fromDocx`, `fromDoc`, `fromHwp`도 있음) |
-| `normalizeLegalHtml(html)` | "제N조 / ① / 1." 문단을 조·항·호 구조로 변환 |
+| `normalizeLegalHtml(html)` | "제N조 / ① / 1. / 갑 제N호증" 문단을 조·항·호·호증 구조로 변환 |
 | `Variable` | 다른 Tiptap 에디터에 넣어 쓸 수 있는 변수 확장 |
-| `Numbering` | 번호 문단 확장 (`setNumbering(1~4 \| null)`, Tab·Shift+Tab 단계 변경, 맨 앞 Backspace 해제) |
+| `Numbering` | 번호·호증 문단 확장 (`setNumbering(1~4 \| null)`, `setEvidence('갑' \| '을' \| '병' \| null)`, Tab·Shift+Tab 단계 변경, 맨 앞 Backspace 해제) |
 | `findCitations(text)` | 글에서 판례·법령 인용 찾기 → `{ type: 'case' \| 'law', text, from, to, url }[]` |
 | `CitationLink` | 인용에 밑줄·링크를 덧입히는 확장 (`LegalEditor`에는 이미 들어 있음) |
 

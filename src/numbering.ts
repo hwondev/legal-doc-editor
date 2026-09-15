@@ -5,13 +5,16 @@ declare module '@tiptap/core' {
     numbering: {
       /** 선택한 문단을 번호 문단으로 (1: 1. / 2: 가. / 3: (1) / 4: (가)), null이면 해제 */
       setNumbering: (level: number | null) => ReturnType
+      /** 선택한 문단을 호증 문단으로 ('갑' → 갑 제N호증), null이면 해제. 번호 문단과 함께 쓸 수 있음 */
+      setEvidence: (party: string | null) => ReturnType
     }
   }
 }
 
 const MAX = 4
+const PARTIES = ['갑', '을', '병']
 
-// 소장식 번호 문단(1. → 가. → (1) → (가)). 번호 글자는 저장하지 않고 legal.css 카운터가 그림
+// 소장식 번호 문단(1. → 가. → (1) → (가))과 입증방법 호증(갑 제N호증). 번호 글자는 저장하지 않고 legal.css 카운터가 그림
 // → 문단을 넣고 빼면 번호가 알아서 다시 매겨짐
 export const Numbering = Extension.create({
   name: 'numbering',
@@ -30,6 +33,11 @@ export const Numbering = Extension.create({
             },
             renderHTML: (attrs) => (attrs.num ? { 'data-num': attrs.num } : {}),
           },
+          evidence: {
+            default: null,
+            parseHTML: (el) => (PARTIES.includes(el.getAttribute('data-evidence')!) ? el.getAttribute('data-evidence') : null),
+            renderHTML: (attrs) => (attrs.evidence ? { 'data-evidence': attrs.evidence } : {}),
+          },
         },
       },
     ]
@@ -41,24 +49,38 @@ export const Numbering = Extension.create({
         (level) =>
         ({ commands }) =>
           commands.updateAttributes('paragraph', { num: level }),
+      setEvidence:
+        (party) =>
+        ({ commands }) =>
+          commands.updateAttributes('paragraph', { evidence: party && PARTIES.includes(party) ? party : null }),
     }
   },
 
   addKeyboardShortcuts() {
-    const current = () => this.editor.getAttributes('paragraph').num as number | null
+    const attrs = () => this.editor.getAttributes('paragraph')
     const shift = (d: number) => () => {
-      const n = current()
+      const n = attrs().num as number | null
       return !!n && this.editor.commands.setNumbering(Math.min(MAX, Math.max(1, n + d)))
     }
     return {
       Tab: shift(1),
       'Shift-Tab': shift(-1),
-      // 번호 문단 맨 앞 Backspace, 빈 번호 문단에서 Enter → 번호만 해제 (목록과 같은 느낌)
+      // 맨 앞 Backspace → 커서에 가까운 표시부터 하나씩 해제(호증 → 번호), 빈 문단에서 Enter → 둘 다 해제 (목록과 같은 느낌)
+      // 내용이 있는 문단에서 Enter는 속성이 새 문단으로 이어져 다음 번호(갑 제2호증)가 됨
       Backspace: () => {
         const { empty, $from } = this.editor.state.selection
-        return !!current() && empty && $from.parentOffset === 0 && this.editor.commands.setNumbering(null)
+        if (!empty || $from.parentOffset !== 0) return false
+        const { num, evidence } = attrs()
+        return evidence ? this.editor.commands.setEvidence(null) : !!num && this.editor.commands.setNumbering(null)
       },
-      Enter: () => !!current() && this.editor.state.selection.$from.parent.content.size === 0 && this.editor.commands.setNumbering(null),
+      Enter: () => {
+        const { num, evidence } = attrs()
+        return (
+          !!(num || evidence) &&
+          this.editor.state.selection.$from.parent.content.size === 0 &&
+          this.editor.commands.updateAttributes('paragraph', { num: null, evidence: null })
+        )
+      },
     }
   },
 })
