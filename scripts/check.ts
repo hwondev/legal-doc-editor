@@ -250,6 +250,18 @@ const typed = withCourtFees(orderNames, { 청구금액: '3,000,000원', '독촉�
 assert.deepEqual([typed['독촉절차 인지대'], typed['독촉절차비용']], ['2,000원', '68,000원']) // 직접 입력한 값을 합계에 사용
 assert.deepEqual(withCourtFees(['청구금액', '인지액'], { 청구금액: '3,000,000' }), { 청구금액: '3,000,000' }) // 소장에는 영향 없음
 
+// 첨부서류 통수: 서증 사본은 상대방 수 + 1(민사소송규칙 제105조제2항), 소장 부본은 피고 수(제48조제1항). 소가 없이도, 직접 입력 우선, 전자소송은 채우지 않음
+const copies = ['입증방법 통수', '소장 부본 통수']
+assert.deepEqual(withCourtFees(copies, {}), { '입증방법 통수': '2통', '소장 부본 통수': '1통' })
+assert.deepEqual(withCourtFees(copies, {}, { parties: 3 }), { '입증방법 통수': '3통', '소장 부본 통수': '2통' })
+assert.deepEqual(withCourtFees(copies, {}, { parties: 4, opponents: 1 }), { '입증방법 통수': '2통', '소장 부본 통수': '1통' })
+assert.deepEqual(withCourtFees(copies, { '소장 부본 통수': '3통' }), { '입증방법 통수': '2통', '소장 부본 통수': '3통' })
+assert.deepEqual(withCourtFees(copies, {}, { electronic: true }), {})
+for (const id of ['complaint-loan', 'complaint-debt-nonexistence']) {
+  const html = templates.find((t) => t.id === id)!.html
+  assert.ok(html.includes('위 입증방법 각 {{입증방법 통수}}') && html.includes('소장 부본 {{소장 부본 통수}}'), id)
+}
+
 // 금액 한글 표기: "일"을 빼지 않음(일만·일십), 빈 자리·빈 묶음은 건너뜀
 assert.equal(toKoreanAmount(37_200_000), '삼천칠백이십만')
 assert.equal(toKoreanAmount(410_000_000), '사억일천만')

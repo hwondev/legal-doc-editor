@@ -20,7 +20,7 @@ export interface LegalEditorProps {
   onChange?: (html: string) => void
   onValuesChange?: (values: Values) => void
   editable?: boolean
-  /** 입력값에 `소가`(소장)나 `청구금액`(지급명령)이 있으면 인지액·송달료 변수를 계산해 채움 (직접 입력한 값이 우선, 참고용) */
+  /** 입력값에 `소가`(소장)나 `청구금액`(지급명령)이 있으면 인지액·송달료 변수를 계산해 채움. 첨부서류 `입증방법 통수`·`소장 부본 통수`는 상대방 수로 채움 (직접 입력한 값이 우선, 참고용) */
   autoFees?: boolean | CourtFeeOptions
   /** 판례 검색 함수. 넘기면 오른쪽에 판례 검색 칸이 생기고, 결과를 누르면 인용 문구가 커서 위치에 들어감 */
   searchCases?: (query: string) => Promise<CaseResult[]>
