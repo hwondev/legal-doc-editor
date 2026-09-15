@@ -4,6 +4,7 @@ import { toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations } from '../src/citation.ts'
 import { calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
+import { templates } from '../src/templates.ts'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -137,5 +138,18 @@ assert.equal(formatAmount(37_200_000), '금 37,200,000원')
 assert.equal(formatAmount(37_200_000, '계약서'), '금 삼천칠백이십만 원정(₩37,200,000)')
 assert.equal(parseAmount('금 37,200,000원'), 37_200_000)
 assert.equal(parseAmount('금액 미정'), 0)
+
+// 문서 템플릿: 제목·변수가 있고, 실제 주민등록번호·전화번호 형식이 들어가지 않음
+assert.deepEqual(
+  templates.map((t) => t.id),
+  ['complaint-loan', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
+)
+for (const t of templates) {
+  assert.match(t.html, /<h1>[^<]+<\/h1>/, t.id)
+  assert.match(t.html, /\{\{[^{}]+\}\}/, t.id)
+  assert.doesNotMatch(t.html, /\d{6}-\d{7}|01[016789]-\d{3,4}-\d{4}/, t.id)
+}
+// 지급명령은 인지액이 소장의 10분의 1이라, 소장 기준 autoFees가 채우는 이름(인지액…·송달료…)을 쓰지 않음
+assert.doesNotMatch(templates.find((t) => t.id === 'payment-order')!.html, /\{\{(인지액|인지대|송달료)/)
 
 console.log('ok')

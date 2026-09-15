@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { LegalEditor } from '../src'
+import { LegalEditor, templates } from '../src'
 
-const template = `
+const nda = `
 <h1>비밀유지계약서</h1>
 <p>{{갑}}(이하 "갑"이라 한다)과 {{을}}(이하 "을"이라 한다)은 다음과 같이 비밀유지계약을 체결한다.</p>
 <h2>(목적)</h2>
@@ -26,6 +27,27 @@ const template = `
 <p>※ 인용 표기 예시 — 민법 제750조, 대법원 2016. 4. 28. 선고 2015다12345 판결 (밑줄에 Ctrl·⌘+클릭하면 국가법령정보센터가 열려요)</p>
 `
 
-createRoot(document.getElementById('root')!).render(
-  <LegalEditor content={template} values={{ 갑: '주식회사 가나다' }} onValuesChange={(v) => console.log(v)} autoFees />,
-)
+const options = [{ id: 'nda', title: '비밀유지계약서 (예시)', html: nda }, ...templates]
+
+function Demo() {
+  const [id, setId] = useState(options[0].id)
+  const current = options.find((o) => o.id === id)!
+  return (
+    <>
+      <label style={{ display: 'block', padding: '12px 16px 0', background: '#eef0f3', font: '14px system-ui, sans-serif' }}>
+        템플릿{' '}
+        <select value={id} onChange={(e) => setId(e.target.value)}>
+          {options.map((o) => (
+            <option key={o.id} value={o.id}>
+              {o.title}
+            </option>
+          ))}
+        </select>
+      </label>
+      {/* 템플릿을 바꾸면 에디터를 새로 만듦 (content는 처음 한 번만 읽음) */}
+      <LegalEditor key={id} content={current.html} values={id === 'nda' ? { 갑: '주식회사 가나다' } : {}} autoFees />
+    </>
+  )
+}
+
+createRoot(document.getElementById('root')!).render(<Demo />)
