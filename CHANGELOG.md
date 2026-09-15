@@ -7,6 +7,8 @@
 
 ### Added
 
+- 지급명령 인지대·송달료 자동 계산 — `calcPaymentOrderStampFee`(소장 인지액의 1/10, 종이 신청 기준), 송달료 독촉 6회분.
+  `autoFees`가 지급명령 템플릿의 `{{독촉절차 인지대}}`·`{{독촉절차 송달료}}`·`{{독촉절차비용}}`을 채움
 - 판례 검색 패널 — `LegalEditor`의 `searchCases` 옵션과 `formatCaseCitation`. 결과를 누르면 인용 문구가 커서 위치에 들어감.
   국가법령정보 공동활용 API 연결 예제 서버(`examples/law-go-kr-proxy`)
 

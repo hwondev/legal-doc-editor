@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations, formatCaseCitation } from '../src/citation.ts'
-import { calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
+import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
 import { templates } from '../src/templates.ts'
 
@@ -124,6 +124,19 @@ assert.equal(withCourtFees(['소가', '송달료'], { 소가: '30,000,000' }, { 
 assert.equal(withCourtFees(['소가', '인지액'], { 소가: '20,000,000', 인지액: '직접 입력' })['인지액'], '직접 입력')
 assert.deepEqual(withCourtFees(['인지액'], {}), {}) // 소가가 없으면 그대로
 
+// 지급명령: 인지대는 소장의 1/10(같은 끝자리 처리), 송달료는 당사자 수 × 6회분
+assert.equal(calcPaymentOrderStampFee(3_000_000), 1_500) // 생활법령정보 예시: (3,000,000 × 0.005) × 0.1
+assert.equal(calcPaymentOrderStampFee(1_000_000), 1_000) // 500원 → 최저 1천원
+assert.equal(calcPaymentOrderStampFee(37_200_000), 17_200) // 17,240원 → 100원 미만 버림
+assert.equal(calcPaymentOrderStampFee(0), 0)
+assert.equal(calcServiceFee({ parties: 2, procedure: '독촉', unitFee: 5_500 }), 66_000)
+const orderNames = ['청구금액', '독촉절차 인지대', '독촉절차 송달료', '독촉절차비용']
+const order = withCourtFees(orderNames, { 청구금액: '3,000,000원' }, { unitFee: 5_500 })
+assert.deepEqual([order['독촉절차 인지대'], order['독촉절차 송달료'], order['독촉절차비용']], ['1,500원', '66,000원', '67,500원'])
+const typed = withCourtFees(orderNames, { 청구금액: '3,000,000원', '독촉절차 인지대': '2,000원' }, { unitFee: 5_500 })
+assert.deepEqual([typed['독촉절차 인지대'], typed['독촉절차비용']], ['2,000원', '68,000원']) // 직접 입력한 값을 합계에 사용
+assert.deepEqual(withCourtFees(['청구금액', '인지액'], { 청구금액: '3,000,000' }), { 청구금액: '3,000,000' }) // 소장에는 영향 없음
+
 // 금액 한글 표기: "일"을 빼지 않음(일만·일십), 빈 자리·빈 묶음은 건너뜀
 assert.equal(toKoreanAmount(37_200_000), '삼천칠백이십만')
 assert.equal(toKoreanAmount(410_000_000), '사억일천만')
@@ -151,6 +164,10 @@ for (const t of templates) {
 }
 // 지급명령은 인지액이 소장의 10분의 1이라, 소장 기준 autoFees가 채우는 이름(인지액…·송달료…)을 쓰지 않음
 assert.doesNotMatch(templates.find((t) => t.id === 'payment-order')!.html, /\{\{(인지액|인지대|송달료)/)
+// 지급명령 템플릿의 변수 이름이 자동 채움 규칙과 맞아야 함
+for (const name of ['청구금액', '독촉절차 인지대', '독촉절차 송달료', '독촉절차비용']) {
+  assert.ok(templates.find((t) => t.id === 'payment-order')!.html.includes(`{{${name}}}`), name)
+}
 
 // 판례 검색 결과 → 인용 문구. 넣은 문구가 다시 인용으로 인식돼야 링크가 붙음
 const found = { court: '대법원', date: '20160428', caseNo: '2015다12345', title: '예시', url: 'https://www.law.go.kr' }

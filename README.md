@@ -80,12 +80,15 @@ export default function Page() {
 ### 인지액·송달료 자동 계산
 
 `<LegalEditor autoFees />`로 켜면, 입력값 `소가`(또는 `소송목적의 값`)를 넣었을 때 이름이 `인지액`·`송달료`로 시작하는 변수(예: `{{인지액 산정 필요}}`)를 계산해서 채워요. 직접 입력한 값이 있으면 그 값을 써요.
+지급명령 신청서(`payment-order` 템플릿)는 `청구금액`을 넣으면 `{{독촉절차 인지대}}`·`{{독촉절차 송달료}}`·`{{독촉절차비용}}`(두 금액 합계)을 채워요.
 
 | 항목 | 기준 | 근거 |
 | --- | --- | --- |
 | 인지액 | 1천만원 미만 × 0.5% / 1억원 미만 × 0.45% + 5천원 / 10억원 미만 × 0.4% + 5만5천원 / 그 이상 × 0.35% + 55만5천원. 100원 미만 버림, 최저 1천원 | 「민사소송 등 인지법」 제2조 |
 | 전자소송 인지액 | 위 계산식 × 0.9 후 100원 미만 버림, 최저 900원 — `autoFees={{ electronic: true }}` | 인지법 제16조, [전자소송포털](https://ecfs.scourt.go.kr/psp/link.on?m=PSP007P01) |
 | 송달료 | 당사자 수 × 회분 × 1회 송달료. 소가 3천만원 이하(소액) 10회분, 넘으면 15회분. 당사자 수 기본 2 — `autoFees={{ parties: 3 }}` | 「송달료규칙의 시행에 따른 업무처리요령」 별표 1, 「소액사건심판규칙」 제1조의2 |
+| 지급명령 인지대 | 소장 인지액 계산식 × 1/10 후 같은 끝자리 처리 (예: 청구금액 300만원 → 1,500원). **전자신청 감액은 아직 반영하지 않음** | 인지법 제7조제2항·제4항 |
+| 지급명령 송달료 | 당사자 수 × 6회분 × 1회 송달료 | 업무처리요령 별표 1 |
 | 1회 송달료 | 5,500원 (2025. 6. 1.부터). 바뀌면 `autoFees={{ unitFee: 5600 }}`처럼 덮어쓰기 | 법원 공지 |
 
 > 계산 결과는 **참고용**이에요. 제1심 소장 기준이고 항소·상고·반소는 계산하지 않아요. 실제 납부액은 법원 안내를 확인하세요.
@@ -108,7 +111,8 @@ export default function Page() {
 | `<LegalEditor content values onChange onValuesChange editable autoFees searchCases />` | 에디터 컴포넌트 |
 | `formatCaseCitation(result)` | 판례 검색 결과 → `대법원 2016. 4. 28. 선고 2015다12345 판결` |
 | `calcStampFee(소가, { electronic })` | 소장 인지액(원) |
-| `calcServiceFee({ parties, procedure, unitFee })` | 송달료(원). `procedure`: 소액·단독·합의·항소·상고·조정 |
+| `calcPaymentOrderStampFee(청구금액)` | 지급명령 신청서 인지대(원) — 종이 신청 기준 |
+| `calcServiceFee({ parties, procedure, unitFee })` | 송달료(원). `procedure`: 소액·단독·합의·항소·상고·조정·독촉 |
 | `withCourtFees(names, values, options)` | 비어 있는 `인지액…`·`송달료…` 변수를 계산값으로 채운 입력값 |
 | `templates` | 기본 문서 템플릿 `{ id, title, description, html }[]` — `<LegalEditor content={templates[0].html} />` |
 | `toKoreanAmount(n)` | `37200000` → `삼천칠백이십만` |
