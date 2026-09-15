@@ -225,6 +225,46 @@ function parseNumMarker(text: string) {
   return null
 }
 
+const OPEN_BRACKETS = '(（[【〔'
+const CLOSE_BRACKETS = ')）]】〕'
+
+/**
+ * "제N조"를 뗀 나머지에서 조 제목이 차지하는 글자 수.
+ * - 괄호 제목 "(목적) 본문" → 괄호까지 (괄호 안 괄호도 짝을 셈)
+ * - 괄호 없는 짧은 한 줄 "목적" → 전체
+ * - 괄호 없이 문장 "갑은 …한다." → 0 (제목 없음, 전부 본문)
+ */
+export function articleTitleLength(text: string): number {
+  const lead = text.length - text.trimStart().length
+  const s = text.trimStart()
+  if (OPEN_BRACKETS.includes(s[0] ?? '_')) {
+    let depth = 0
+    for (let i = 0; i < Math.min(s.length, 60); i++) {
+      if (OPEN_BRACKETS.includes(s[i])) depth++
+      else if (CLOSE_BRACKETS.includes(s[i]) && --depth === 0) return lead + i + 1
+    }
+    return 0 // 괄호가 닫히지 않거나 너무 길면 제목으로 보지 않음
+  }
+  return s.trim().length <= 20 && !/[.다]$/.test(s.trim()) ? text.length : 0
+}
+
+// 요소 앞쪽 n글자를 떼어 냄 (굵게 같은 감싼 태그는 양쪽에 복제되어 유지)
+function takeLeadingText(el: Element, n: number): DocumentFragment {
+  const range = el.ownerDocument.createRange()
+  range.setStart(el, 0)
+  range.setEnd(el, el.childNodes.length)
+  const walker = el.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT)
+  let rest = n
+  for (let t = walker.nextNode() as Text | null; t; t = walker.nextNode() as Text | null) {
+    if (rest <= t.data.length) {
+      range.setEnd(t, rest)
+      break
+    }
+    rest -= t.data.length
+  }
+  return range.extractContents()
+}
+
 function stripPrefix(el: Element, re: RegExp | number) {
   let n = typeof re === 'number' ? re : el.textContent!.match(re)![0].length
   const walker = el.ownerDocument.createTreeWalker(el, NodeFilter.SHOW_TEXT)
@@ -278,10 +318,13 @@ export function normalizeLegalHtml(html: string) {
       counts.fill(0)
       runs.fill(0)
     } else if (el.tagName === 'P' && ARTICLE.test(text)) {
+      stripPrefix(el, ARTICLE)
+      // "제1조(목적) 이 계약은…"처럼 제목과 본문이 한 문단이면 제목만 조(h2)로, 본문은 바로 다음 문단으로 (서식 유지)
       const h2 = doc.createElement('h2')
-      h2.innerHTML = el.innerHTML
-      stripPrefix(h2, ARTICLE)
+      h2.append(takeLeadingText(el, articleTitleLength(el.textContent ?? '')))
+      stripPrefix(el, /^\s*/)
       el.replaceWith(h2)
+      if (el.textContent!.trim()) h2.after(el)
       ol = null
       counts.fill(0)
       runs.fill(0)
