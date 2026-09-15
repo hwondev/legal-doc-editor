@@ -278,6 +278,19 @@ assert.match(brief, /data-evidence="갑" data-evidence-id="brief-1"/)
 assert.ok(brief.includes('위 입증방법 각 {{입증방법 통수}}') && brief.includes('준비서면 부본 {{준비서면 부본 통수}}'))
 assert.doesNotMatch(brief, /\{\{(인지액|인지대|송달료|소가)/)
 
+// 피고용 준비서면: 사건 표시 순서는 그대로, 항목·호증(을)·결론·서명은 피고 쪽
+const defendantBrief = templates.find((t) => t.id === 'preparatory-brief-defendant')!.html
+assert.match(defendantBrief, /<p>원 고 \{\{원고 이름\}\}<\/p>\n<p>피 고 \{\{피고 이름\}\}<\/p>/)
+for (const item of ['피고는 다음과 같이 변론을 준비합니다', '원고 주장에 대한 반박', '피고의 추가 주장', '원고가 낸 증거에 대한 의견', '원고의 청구는 이유 없습니다', '피고 {{피고 이름}} (서명 또는 날인)'])
+  assert.ok(defendantBrief.includes(item), item)
+assert.match(defendantBrief, /<span data-evidence-ref="brief-d-1">을 제1호증<\/span>/)
+assert.doesNotMatch(defendantBrief, /data-evidence="갑"/)
+assert.ok(defendantBrief.includes('위 입증방법 각 {{입증방법 통수}}') && defendantBrief.includes('준비서면 부본 {{준비서면 부본 통수}}'))
+assert.deepEqual(
+  templates.filter((t) => t.id.startsWith('preparatory-brief')).map((t) => t.title),
+  ['준비서면 (원고)', '준비서면 (피고)'],
+)
+
 // 금액 한글 표기: "일"을 빼지 않음(일만·일십), 빈 자리·빈 묶음은 건너뜀
 assert.equal(toKoreanAmount(37_200_000), '삼천칠백이십만')
 assert.equal(toKoreanAmount(410_000_000), '사억일천만')
@@ -296,7 +309,7 @@ assert.equal(parseAmount('금액 미정'), 0)
 // 문서 템플릿: 제목·변수가 있고, 실제 주민등록번호·전화번호 형식이 들어가지 않음
 assert.deepEqual(
   templates.map((t) => t.id),
-  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'answer', 'preparatory-brief', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
+  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'answer', 'preparatory-brief', 'preparatory-brief-defendant', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
 )
 for (const t of templates) {
   assert.match(t.html, /<h1>[^<]+<\/h1>/, t.id)
