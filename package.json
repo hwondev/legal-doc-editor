@@ -1,6 +1,6 @@
 {
   "name": "legal-doc-editor",
-  "version": "0.16.1",
+  "version": "0.17.0",
   "description": "법률문서(계약서·소장·고소장) 생성용 React 에디터 — 조항·번호 자동 매김, {{변수}} 채우기, 한글(hwp·hwpx)·Word(docx) 열기·저장",
   "license": "MIT",
   "repository": {

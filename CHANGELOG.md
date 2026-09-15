@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-16
+
 ### Added
 
 - 답변서 템플릿 `answer` — 사건 표시, 청구취지에 대한 답변(청구 기각·소송비용), 청구원인에 대한 답변(인정하는 사실·부인하는 사실·항변), 입증방법(`을` 호증과 본문 참조), 첨부서류. 「민사소송법」 제256조·제274조, 「민사소송규칙」 제65조의 기재사항을 담음
@@ -151,7 +153,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.17.0...HEAD
+[0.17.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.14.0...v0.15.0
