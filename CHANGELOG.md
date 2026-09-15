@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-15
+
 ### Changed
 
 - 불러오기에서 `제1조(목적) 이 계약은…`처럼 제목과 본문이 한 문단에 붙은 조를 조 제목(`(목적)`)과 본문 문단으로 나눔. 괄호 안 괄호·굵게 서식 유지, 괄호 없는 짧은 한 줄은 전체를 제목으로, 문장만 있으면 제목 없이 본문으로
@@ -66,7 +68,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.6.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.3.0...v0.4.0
