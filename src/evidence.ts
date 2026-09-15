@@ -12,7 +12,7 @@ function eachEvidence(doc: PMNode, fn: (node: PMNode, pos: number, party: string
     if (EVIDENCE_SKIP.includes(node.type.name)) return false
     if (node.type.name !== 'paragraph') return true
     const party: string | null = node.attrs.evidence
-    if (party) fn(node, pos, party, (counts[party] = (counts[party] ?? 0) + 1))
+    if (party) fn(node, pos, party, (counts[party] = node.attrs.evidenceStart ?? (counts[party] ?? 0) + 1))
     return false
   })
 }

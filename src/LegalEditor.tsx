@@ -136,6 +136,15 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
     const party = editor!.getAttributes('paragraph').evidence
     cmd().setEvidence(party === '갑' ? '을' : party ? null : '갑').run()
   }
+  // 준비서면처럼 앞 서면에 낸 증거 다음 번호(갑 제5호증)부터 시작할 때
+  const startEvidence = () => {
+    const { evidence, evidenceStart } = editor!.getAttributes('paragraph')
+    if (!evidence) return window.alert('호증 문단에서 눌러 주세요')
+    const v = window.prompt('이 호증의 번호 (비우면 앞 호증에 이어서)', evidenceStart ? String(evidenceStart) : '')
+    if (v === null) return
+    const n = Number.parseInt(v, 10)
+    cmd().setEvidenceStart(n >= 1 ? n : null).run()
+  }
   // 선택한 글에서 숫자만 뽑아 금액 서식으로 바꿈 ("37200000", "3,720만" → 숫자 부분)
   const amount = (style: '소장' | '계약서') => {
     const { from, to } = editor!.state.selection
@@ -158,6 +167,9 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             ))}
             <button type="button" title="입증방법 갑 제N호증 자동 번호 — 누를 때마다 갑 → 을 → 해제, Enter로 다음 호증" onClick={toggleEvidence}>
               호증
+            </button>
+            <button type="button" title="이 호증의 번호를 정해요 — 준비서면에서 갑 제5호증부터 시작할 때" onClick={startEvidence}>
+              호증 시작
             </button>
             <button type="button" onClick={() => cmd().toggleOrderedList().run()}>항</button>
             <button type="button" onClick={() => cmd().sinkListItem('listItem').run()}>호 →</button>
