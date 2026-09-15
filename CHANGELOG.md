@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-16
+
 ### Added
 
 - 첨부서류 통수 자동 채우기 — `autoFees`가 `{{입증방법 통수}}`(서증 사본: 상대방 수 + 1, 「민사소송규칙」 제105조제2항)와 `{{소장 부본 통수}}`(피고 수, 제48조제1항)를 채움. 상대방 수는 `opponents` 옵션(기본 당사자 수 − 1). 소가 없이도 채우고 직접 입력한 값이 우선, 전자소송(`electronic`)은 제출 통수를 확인하지 못해 채우지 않음
@@ -137,7 +139,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.0...HEAD
+[0.16.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.12.0...v0.13.0
