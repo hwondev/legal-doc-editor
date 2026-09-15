@@ -27,5 +27,5 @@ const template = `
 `
 
 createRoot(document.getElementById('root')!).render(
-  <LegalEditor content={template} values={{ 갑: '주식회사 가나다' }} onValuesChange={(v) => console.log(v)} />,
+  <LegalEditor content={template} values={{ 갑: '주식회사 가나다' }} onValuesChange={(v) => console.log(v)} autoFees />,
 )

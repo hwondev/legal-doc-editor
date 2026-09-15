@@ -2,6 +2,7 @@
 import assert from 'node:assert/strict'
 import { toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations } from '../src/citation.ts'
+import { calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -90,5 +91,35 @@ assert.equal(prec.url, `https://www.law.go.kr/LSW/precSc.do?query=${encodeURICom
 
 // 인용은 화면에만 덧입히므로 내보내기 결과는 그대로여야 함
 assert.equal(toPlainHtml({ type: 'doc', content: [p(t('민법 제750조'))] }, {}), '<p>민법 제750조</p>')
+
+// 인지액: 구간 경계, 최저 1천원, 100원 미만 버림, 전자소송 10분의 9
+assert.equal(calcStampFee(100_000), 1_000) // 500원 → 최저 1천원
+assert.equal(calcStampFee(9_999_999), 49_900) // 49,999.995원 → 100원 미만 버림
+assert.equal(calcStampFee(10_000_000), 50_000)
+assert.equal(calcStampFee(37_200_000), 172_400)
+assert.equal(calcStampFee(99_999_999), 454_900)
+assert.equal(calcStampFee(100_000_000), 455_000)
+assert.equal(calcStampFee(999_999_999), 4_054_900)
+assert.equal(calcStampFee(1_000_000_000), 4_055_000)
+assert.equal(calcStampFee(37_200_000, { electronic: true }), 155_100) // 172,400 × 9/10 = 155,160
+// 전자소송포털 예시와, 0.9를 곱한 뒤 끝자리를 버려야 하는 경우(14,799 × 0.9 = 13,319.1 → 13,300)
+assert.equal(calcStampFee(50_000_000, { electronic: true }), 207_000)
+assert.equal(calcStampFee(100_000_000, { electronic: true }), 409_500)
+assert.equal(calcStampFee(2_959_800, { electronic: true }), 13_300)
+assert.equal(calcStampFee(100_000, { electronic: true }), 900)
+assert.equal(calcStampFee(0), 0)
+
+// 송달료: 당사자 수 × 회분 × 1회 송달료
+assert.equal(calcServiceFee({ parties: 2, procedure: '소액', unitFee: 5_500 }), 110_000)
+assert.equal(calcServiceFee({ parties: 3, procedure: '단독' }), 3 * 15 * SERVICE_UNIT_FEE)
+
+// 자동 채움: 이름이 인지액·송달료로 시작하는 빈 변수만, 3천만원 이하는 소액 10회분
+const fees = withCourtFees(['소가', '인지액 산정 필요', '송달료', '원고'], { 소가: '37,200,000원', 원고: 'A' }, { unitFee: 5_500 })
+assert.equal(fees['인지액 산정 필요'], '172,400원')
+assert.equal(fees['송달료'], '165,000원') // 3천만원 초과 → 2명 × 15회분 × 5,500원
+assert.equal(fees['원고'], 'A')
+assert.equal(withCourtFees(['소가', '송달료'], { 소가: '30,000,000' }, { unitFee: 5_500 })['송달료'], '110,000원')
+assert.equal(withCourtFees(['소가', '인지액'], { 소가: '20,000,000', 인지액: '직접 입력' })['인지액'], '직접 입력')
+assert.deepEqual(withCourtFees(['인지액'], {}), {}) // 소가가 없으면 그대로
 
 console.log('ok')
