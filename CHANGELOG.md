@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-16
+
 ### Added
 
 - 템플릿 분류 `category` — 원고·신청인(소장 2종·준비서면 (원고)·지급명령 신청서) / 피고(답변서·준비서면 (피고)) / 기타(채무부존재 확인서·고소장·내용증명). 데모의 템플릿 선택이 분류별 묶음으로 보임
@@ -179,7 +181,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.19.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.20.0...HEAD
+[0.20.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.1...v0.17.0
