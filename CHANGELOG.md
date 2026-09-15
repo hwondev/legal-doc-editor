@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- 판례 검색 패널 — `LegalEditor`의 `searchCases` 옵션과 `formatCaseCitation`. 결과를 누르면 인용 문구가 커서 위치에 들어감.
+  국가법령정보 공동활용 API 연결 예제 서버(`examples/law-go-kr-proxy`)
+
 ## [0.2.0] - 2026-09-15
 
 ### Added

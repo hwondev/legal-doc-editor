@@ -56,6 +56,31 @@ export function findCitations(text: string): Citation[] {
   return out
 }
 
+/** 판례 검색 결과 한 건 — LegalEditor의 `searchCases`가 돌려주는 모양 */
+export interface CaseResult {
+  /** 법원명: 대법원, 서울고등법원 … */
+  court: string
+  /** 선고일자: "20160428", "2016-04-28", "2016.04.28" 모두 받음 */
+  date: string
+  /** 사건번호: 2015다12345 */
+  caseNo: string
+  /** 사건명 */
+  title: string
+  /** 판결·결정·명령 (없으면 판결) */
+  kind?: string
+  summary?: string
+  /** 원문 보기 주소 */
+  url: string
+}
+
+/** 검색 결과 → 본문 인용 문구: "대법원 2016. 4. 28. 선고 2015다12345 판결", 결정은 "대법원 2020. 1. 9.자 2019마123 결정" */
+export function formatCaseCitation({ court, date, caseNo, kind = '' }: CaseResult): string {
+  const m = date.match(/(\d{4})\D*(\d{1,2})\D*(\d{1,2})/)
+  const day = m ? `${m[1]}. ${+m[2]}. ${+m[3]}.` : date
+  const k = /결정/.test(kind) ? '결정' : /명령/.test(kind) ? '명령' : '판결'
+  return k === '판결' ? `${court} ${day} 선고 ${caseNo} 판결` : `${court} ${day}자 ${caseNo} ${k}`
+}
+
 const key = new PluginKey<DecorationSet>('citation')
 
 // 텍스트 노드 하나씩 보므로 인용 중간에 굵게 같은 서식이 끼면 그 인용은 넘어감
