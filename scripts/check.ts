@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { hwpToText } from 'hwp-convert'
-import { toHwp, toHwpx, toPlainHtml } from '../src/io.ts'
+import { parseMsDoc } from '@file-viewer/doc'
+import { docBlocksToHtml, toHwp, toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations, formatCaseCitation } from '../src/citation.ts'
 import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
@@ -72,6 +73,15 @@ assert.deepEqual([...hwpBytes.slice(0, 4)], [0xd0, 0xcf, 0x11, 0xe0]) // CFB(OLE
 const noSpace = (s: string) => s.replace(/\s/g, '')
 const expectedText = noSpace(toPlainHtml(doc, { 갑: '<갑&>' }).replace(/<[^>]+>/g, '').replace(/&#(\d+);/g, (_, c) => String.fromCharCode(+c)))
 assert.equal(noSpace(await hwpToText(hwpBytes)), expectedText)
+
+// .doc 열기: 한 문단 블록 안의 단락 기호(\r)로 문단을 나누고, 표는 표로 (fixtures/sample.doc: 개인정보 없는 샘플)
+const docHtml = docBlocksToHtml(parseMsDoc(new Uint8Array(readFileSync('scripts/fixtures/sample.doc'))).blocks)
+assert.match(docHtml, /^<p>물품공급계약서 \(샘플\)<\/p><p>주식회사 예시상사/)
+assert.match(docHtml, /<p>제1조\(목적\) 이 계약은 갑이 을에게/)
+assert.match(docHtml, /<p>① 어느 당사자가 계약을 위반하면/)
+assert.match(docHtml, /<p>1\. 파산·회생절차 개시 신청이 있는 경우<\/p><p>2\. 강제집행을 받은 경우<\/p>/)
+assert.match(docHtml, /<table><tr><td>구분<\/td><td>금액<\/td><\/tr><tr><td>계약금<\/td><td>3,720,000원<\/td><\/tr><\/table>/)
+assert.match(docHtml, /<p>납품 장소: \[ 납품 장소 \]<\/p><p>2026\. 9\. 15\.<\/p>$/)
 
 // 판례·법령 인용 인식
 const cites = (s: string) => findCitations(s).map((c) => `${c.type}:${c.text}`)

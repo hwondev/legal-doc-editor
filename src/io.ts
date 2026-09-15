@@ -1,4 +1,5 @@
 import type { JSONContent } from '@tiptap/core'
+import type { MsDocBlock } from '@file-viewer/doc'
 import type { Values } from './variable'
 
 // docx·mammoth·hwp-convert는 무거워서 쓸 때만 불러옴 (에디터 본체 번들엔 안 들어감)
@@ -346,9 +347,45 @@ export async function fromHwp(file: Blob): Promise<string> {
   return normalizeLegalHtml(await reader.extractHtml())
 }
 
-/** 확장자로 골라 여는 헬퍼: .docx / .hwp / .hwpx */
+/** .doc(Word 97–2003) → 에디터용 HTML. @file-viewer/doc로 읽고 글자·표만 옮김 */
+export async function fromDoc(file: Blob): Promise<string> {
+  const { parseMsDoc } = await import('@file-viewer/doc')
+  const parsed = parseMsDoc(new Uint8Array(await file.arrayBuffer()))
+  return normalizeLegalHtml(docBlocksToHtml(parsed.blocks))
+}
+
+// Word 제어문자 정리: 단락 기호(\r)·줄 바꿈(\v)은 호출하는 쪽에서 처리하고 나머지(셀 끝 표시 등)는 지움
+const cleanDocText = (s: string) => s.replace(/[\x00-\x08\x0c\x0e-\x1f]/g, '')
+
+/**
+ * .doc 파싱 결과 → 단순 HTML. 한 문단 블록 안에 단락 기호(\r)로 여러 문단이 붙어 오는 경우가 있어 \r로 나누고, \v(줄 바꿈)는 <br>로
+ * ponytail: 글자 서식(굵게 등)·그림은 옮기지 않음 — 필요하면 inlines의 글자 속성을 읽어 확장
+ */
+export function docBlocksToHtml(blocks: MsDocBlock[]): string {
+  const paragraphs = (text: string) =>
+    cleanDocText(text)
+      .split('\r')
+      .filter((t) => t.trim())
+      .map((t) => `<p>${esc(t).replace(/\v/g, '<br>')}</p>`)
+      .join('')
+  return blocks
+    .map((b) => {
+      if (b.type === 'paragraph') return paragraphs(b.text)
+      if (b.type !== 'table') return '' // 첨부 등은 옮기지 않음
+      const cell = (c: (typeof b.rows)[number]['cells'][number]) =>
+        `<td${(c.colspan ?? 1) > 1 ? ` colspan="${c.colspan}"` : ''}${(c.rowspan ?? 1) > 1 ? ` rowspan="${c.rowspan}"` : ''}>${c.paragraphs
+          .map((p) => esc(cleanDocText(p.text).replace(/[\r\v]/g, '')))
+          .filter(Boolean)
+          .join('<br>')}</td>`
+      return `<table>${b.rows.map((r) => `<tr>${r.cells.filter((c) => !c.hidden).map(cell).join('')}</tr>`).join('')}</table>`
+    })
+    .join('')
+}
+
+/** 확장자로 골라 여는 헬퍼: .docx / .doc / .hwp / .hwpx */
 export function fromFile(file: File): Promise<string> {
   if (/\.docx$/i.test(file.name)) return fromDocx(file)
+  if (/\.doc$/i.test(file.name)) return fromDoc(file)
   if (/\.hwpx?$/i.test(file.name)) return fromHwp(file)
-  return Promise.reject(new Error('.docx, .hwp, .hwpx 파일만 열 수 있어요'))
+  return Promise.reject(new Error('.docx, .doc, .hwp, .hwpx 파일만 열 수 있어요'))
 }
