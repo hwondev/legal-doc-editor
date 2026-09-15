@@ -80,6 +80,10 @@ npm run dev    # 데모: http://localhost:5173
 npm run build  # dist/
 ```
 
+## 기여
+
+[기여 안내](./CONTRIBUTING.md) · [변경 기록](./CHANGELOG.md) · [보안 정책](./SECURITY.md)
+
 ## 라이선스
 
 MIT
