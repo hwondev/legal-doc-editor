@@ -206,7 +206,7 @@ assert.equal(parseAmount('금액 미정'), 0)
 // 문서 템플릿: 제목·변수가 있고, 실제 주민등록번호·전화번호 형식이 들어가지 않음
 assert.deepEqual(
   templates.map((t) => t.id),
-  ['complaint-loan', 'complaint-debt-nonexistence', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
+  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
 )
 for (const t of templates) {
   assert.match(t.html, /<h1>[^<]+<\/h1>/, t.id)
