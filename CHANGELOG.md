@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-15
+
 ### Added
 
 - 입증방법 호증 번호 자동 매기기 — `p[data-evidence="갑"|"을"|"병"]` 문단에 `갑 제1호증`, `갑 제2호증`…을 자동으로 매김(당사자별로 문서 전체에서 이어 셈, 번호 문단과 함께 쓰면 `1. 갑 제1호증`). 툴바 **호증** 버튼(갑 → 을 → 해제), Enter로 다음 호증, `setEvidence` 명령.
@@ -83,7 +85,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.5.0...v0.6.0
