@@ -5,6 +5,7 @@ import { findCitations, formatCaseCitation } from '../src/citation.ts'
 import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
 import { templates } from '../src/templates.ts'
+import { clauses } from '../src/clauses.ts'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -177,5 +178,14 @@ const decision = { ...found, date: '2020.01.09', caseNo: '2019마123', kind: '�
 assert.equal(formatCaseCitation(decision), '대법원 2020. 1. 9.자 2019마123 결정')
 assert.deepEqual(cites(formatCaseCitation(found)), ['case:대법원 2016. 4. 28. 선고 2015다12345 판결'])
 assert.deepEqual(cites(formatCaseCitation(decision)), ['case:대법원 2020. 1. 9.자 2019마123 결정'])
+
+// 조항 라이브러리: id 중복 없음, 조 하나로 시작, 조 번호 숫자(자동 번호와 겹침)·개인정보 형식 없음
+assert.equal(new Set(clauses.map((c) => c.id)).size, clauses.length)
+for (const c of clauses) {
+  assert.match(c.html, /^<h2>\([^<]+\)<\/h2>/, c.id)
+  assert.equal(c.html.match(/<h2>/g)!.length, 1, c.id)
+  assert.doesNotMatch(c.html, /제\s*\d+\s*조/, c.id)
+  assert.doesNotMatch(c.html, /\d{6}-\d{7}|01[016789]-\d{3,4}-\d{4}/, c.id)
+}
 
 console.log('ok')

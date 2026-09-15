@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { LegalEditor, templates } from '../src'
+import { LegalEditor, clauses, templates } from '../src'
 
 const nda = `
 <h1>비밀유지계약서</h1>
@@ -55,7 +55,7 @@ function Demo() {
         </select>
       </label>
       {/* 템플릿을 바꾸면 에디터를 새로 만듦 (content는 처음 한 번만 읽음) */}
-      <LegalEditor key={id} content={current.html} values={id === 'nda' ? { 갑: '주식회사 가나다' } : {}} autoFees searchCases={demoSearchCases} />
+      <LegalEditor key={id} content={current.html} values={id === 'nda' ? { 갑: '주식회사 가나다' } : {}} autoFees searchCases={demoSearchCases} clauses={clauses} />
     </>
   )
 }

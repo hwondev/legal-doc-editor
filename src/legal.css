@@ -81,6 +81,14 @@
 .le-case-list span, .le-case-list small { color: #555; }
 .le-case-list a { justify-self: end; color: #3a56b4; font-size: 12px; }
 
+/* 조항 라이브러리 (clauses) */
+.le-clauses { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e3e6ea; }
+.le-clauses > input { width: 100%; box-sizing: border-box; margin-bottom: 6px; }
+.le-clause-list { display: grid; gap: 4px; max-height: 280px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.le-clause-list button { width: 100%; padding: 4px 8px; border: 1px solid #d0d4da; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; font: inherit; font-size: 12px; }
+.le-clause-list button:hover:not(:disabled) { background: #f3f5f8; }
+.le-clause-list small { margin-right: 6px; color: #3a56b4; }
+
 @media (max-width: 800px) {
   .le-root { grid-template-columns: 1fr; }
   .legal-doc { padding: 32px 24px; }

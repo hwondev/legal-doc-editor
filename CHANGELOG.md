@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 조항 라이브러리 — `clauses` 기본 조항 11개와 `LegalEditor`의 `clauses` 옵션. 검색해서 누르면 커서 위치에 조항이 들어가고 조 번호가 다시 매겨짐
+
 ## [0.3.0] - 2026-09-15
 
 ### Added
