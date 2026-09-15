@@ -185,7 +185,8 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
                       type="button"
                       disabled={!editable}
                       title="커서 위치에 조항 넣기"
-                      onClick={() => editor?.chain().focus().insertContent(toChips(c.html)).run()}
+                      // 조항 HTML의 줄바꿈·들여쓰기가 빈 항목(빈 "1." 호)으로 들어가지 않게 공백을 버림
+                      onClick={() => editor?.chain().focus().insertContent(toChips(c.html), { parseOptions: { preserveWhitespace: false } }).run()}
                     >
                       <small>{c.category}</small>
                       {c.title}
