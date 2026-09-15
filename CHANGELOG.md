@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-16
+
 ### Added
 
 - 본문 호증 참조 자동 갱신 — 호증 문단에 고정 id(`data-evidence-id`), 본문의 `갑 제N호증`은 그 증거를 가리키는 참조(`span[data-evidence-ref]`, `EvidenceRef` 확장)로 바뀌어 증거를 넣고 빼거나 옮겨도 번호가 따라감. 가리키던 증거를 지우면 빨간 밑줄.
@@ -107,7 +109,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.11.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.12.0...HEAD
+[0.12.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.8.0...v0.9.0
