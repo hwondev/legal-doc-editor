@@ -1,6 +1,7 @@
-// 번호 매기기·이스케이프·hwpx 생성 확인 (DOM 없이 도는 부분만). 실행: npm run check
+// 번호 매기기·이스케이프·hwpx 생성·인용 인식 확인 (DOM 없이 도는 부분만). 실행: npm run check
 import assert from 'node:assert/strict'
 import { toHwpx, toPlainHtml } from '../src/io.ts'
+import { findCitations } from '../src/citation.ts'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -57,5 +58,35 @@ assert.match(html, /<table><tr><td colspan="2">합계<br>2줄<\/td><\/tr><tr><td
 
 const hwpx = new Uint8Array(await (await toHwpx(doc, {})).arrayBuffer())
 assert.deepEqual([...hwpx.slice(0, 2)], [0x50, 0x4b]) // zip
+
+// 판례·법령 인용 인식
+const cites = (s: string) => findCitations(s).map((c) => `${c.type}:${c.text}`)
+
+assert.deepEqual(cites('위 사건은 대법원 2016. 4. 28. 선고 2015다12345 판결 참조'), ['case:대법원 2016. 4. 28. 선고 2015다12345 판결'])
+assert.deepEqual(cites('서울고등법원 2019. 1. 10. 선고 2018나1234 판결'), ['case:서울고등법원 2019. 1. 10. 선고 2018나1234 판결'])
+assert.deepEqual(cites('대법원 2020. 1. 9.자 2019마123 결정'), ['case:대법원 2020. 1. 9.자 2019마123 결정'])
+assert.deepEqual(cites('이 사건(2015다12345)과 2018노1234, 2024가단157033'), ['case:2015다12345', 'case:2018노1234', 'case:2024가단157033'])
+assert.deepEqual(cites('불법행위에 따른 민법 제750조의 손해배상'), ['law:민법 제750조'])
+assert.deepEqual(cites('형법 제347조 제1항'), ['law:형법 제347조 제1항'])
+assert.deepEqual(cites('민사소송법 제194조'), ['law:민사소송법 제194조'])
+assert.deepEqual(cites('특정경제범죄 가중처벌 등에 관한 법률 제3조'), ['law:특정경제범죄 가중처벌 등에 관한 법률 제3조'])
+assert.deepEqual(cites('피고인을 특정경제범죄 가중처벌 등에 관한 법률 제3조로 기소하였다'), ['law:특정경제범죄 가중처벌 등에 관한 법률 제3조'])
+assert.deepEqual(cites('민법 제839조의2'), ['law:민법 제839조의2'])
+
+// 인식하면 안 되는 것: 날짜, 전화번호, 계좌번호, 금액
+assert.deepEqual(cites('2026. 9. 2. 계약을 체결하였다'), [])
+assert.deepEqual(cites('연락처 010-1234-5678 (사무실 02-530-1234)'), [])
+assert.deepEqual(cites('계좌번호 3333-17-4044109'), [])
+assert.deepEqual(cites('합의금 1234만5000원을 지급한다'), [])
+
+// 위치와 링크 주소
+const [law] = findCitations('위반하여 민법 제750조에 따라')
+assert.deepEqual([law.from, law.to], [5, 13])
+assert.equal(law.url, `https://www.law.go.kr/${['법령', '민법', '제750조'].map(encodeURIComponent).join('/')}`)
+const [prec] = findCitations('대법원 2016. 4. 28. 선고 2015다12345 판결')
+assert.equal(prec.url, `https://www.law.go.kr/LSW/precSc.do?query=${encodeURIComponent('2015다12345')}`)
+
+// 인용은 화면에만 덧입히므로 내보내기 결과는 그대로여야 함
+assert.equal(toPlainHtml({ type: 'doc', content: [p(t('민법 제750조'))] }, {}), '<p>민법 제750조</p>')
 
 console.log('ok')

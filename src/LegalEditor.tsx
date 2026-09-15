@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { TableKit } from '@tiptap/extension-table'
 import { Variable, toChips, type Values } from './variable'
 import { Numbering } from './numbering'
+import { CitationLink } from './citation'
 import { fromFile, toDocx, toHwpx } from './io'
 import './legal.css'
 
@@ -46,7 +47,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
   const [names, setNames] = useState<string[]>([])
 
   const editor = useEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), TableKit, Variable, Numbering],
+    extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), TableKit, Variable, Numbering, CitationLink],
     content: toChips(content),
     editable,
     immediatelyRender: false,
