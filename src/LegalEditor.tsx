@@ -8,7 +8,7 @@ import { CitationLink, formatCaseCitation, type CaseResult } from './citation'
 import type { Clause } from './clauses'
 import { withCourtFees, type CourtFeeOptions } from './fees'
 import { formatAmount, parseAmount } from './amount'
-import { fromFile, toDocx, toHwpx } from './io'
+import { fromFile, toDocx, toHwp, toHwpx } from './io'
 import './legal.css'
 
 export interface LegalEditorProps {
@@ -25,6 +25,8 @@ export interface LegalEditorProps {
   searchCases?: (query: string) => Promise<CaseResult[]>
   /** 조항 목록. 넘기면 오른쪽에 조항 라이브러리가 생기고, 누르면 커서 위치에 조항이 들어감 (기본 제공 목록: `clauses`) */
   clauses?: Clause[]
+  /** .hwp 저장에 쓰는 @rhwp/core WASM 주소. 번들러가 WASM 경로를 못 찾을 때만 지정 (예: '/rhwp_bg.wasm') */
+  hwpWasmUrl?: string
 }
 
 function varNames(editor: Editor) {
@@ -51,7 +53,7 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 
-export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases, clauses }: LegalEditorProps) {
+export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases, clauses, hwpWasmUrl }: LegalEditorProps) {
   const [values, setValues] = useState(initial)
   const [names, setNames] = useState<string[]>([])
   const [caseQuery, setCaseQuery] = useState('')
@@ -104,7 +106,11 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
 
   const save = async (to: typeof toDocx, ext: string) => {
     const title = editor!.state.doc.firstChild?.textContent.trim() || '문서'
-    download(await to(editor!.getJSON(), shown), `${title}.${ext}`)
+    try {
+      download(await to(editor!.getJSON(), shown), `${title}.${ext}`)
+    } catch (err) {
+      window.alert(`저장하지 못했어요: ${(err as Error).message}`)
+    }
   }
 
   // ponytail: 늦게 도착한 이전 검색 결과가 덮어쓸 수 있음 — 필요해지면 요청 번호로 막기
@@ -157,7 +163,10 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
               <input type="file" accept=".docx,.hwp,.hwpx" hidden onChange={openFile} />
             </label>
             <button type="button" onClick={() => save(toDocx, 'docx')}>Word 저장</button>
-            <button type="button" onClick={() => save(toHwpx, 'hwpx')}>한글 저장</button>
+            <button type="button" onClick={() => save(toHwpx, 'hwpx')}>한글(.hwpx) 저장</button>
+            <button type="button" title="HWP 5.0 — 처음 저장할 때 변환기(약 10MB)를 불러와요" onClick={() => save((d, v) => toHwp(d, v, { wasm: hwpWasmUrl }), 'hwp')}>
+              한글(.hwp) 저장
+            </button>
             <button type="button" onClick={printDoc}>인쇄 · PDF</button>
           </div>
         )}

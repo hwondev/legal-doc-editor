@@ -7,7 +7,7 @@
 - **조·항·호 자동 번호**: 조를 넣거나 옮기면 제1조, ①, 1. 번호가 알아서 다시 매겨져요
 - **`{{변수}}` 채우기**: 본문에 `{{갑}}`을 입력하면 입력칸이 생기고, 값을 넣으면 문서에 반영돼요
 - **한글(.hwp·.hwpx)·Word(.docx) 열기·저장**: 일반 문단으로 쓴 계약서도 "제N조", "①", "1." 패턴을 인식해서 조·항·호 구조로 바꿔요
-  - 저장은 `.docx`와 `.hwpx`예요. `.hwpx`는 한글 2014 이상에서 열리고, 한글에서 `.hwp`로 다시 저장할 수 있어요
+  - 저장은 `.docx`, `.hwpx`, `.hwp`(HWP 5.0)예요. `.hwpx`는 한글 2014 이상에서 열려요
   - 파일 변환 라이브러리는 필요할 때만 불러와서 에디터 본체 번들은 가벼워요
 - **판례·법령 인용 링크**: 본문의 `민법 제750조`, `대법원 2016. 4. 28. 선고 2015다12345 판결`, `2024가단157033` 같은 인용을 알아보고 [국가법령정보센터](https://www.law.go.kr) 링크를 붙여요 (API 키가 필요 없어요)
 - **조항 라이브러리**: 비밀유지·계약해지·관할법원 같은 자주 쓰는 조항을 골라 커서 위치에 넣어요. 조 번호는 알아서 다시 매겨져요
@@ -68,6 +68,21 @@ export default function Page() {
 
 날짜(`2026. 9. 2.`), 전화번호, 계좌번호는 인용으로 보지 않아요. 다만 인용 인식은 글자 모양만 보는 것이라 놓치거나 잘못 잡을 수 있고, 링크가 가리키는 조문이 실제로 맞는지는 직접 확인해 주세요.
 
+### .hwp 저장
+
+툴바의 **한글(.hwp) 저장**은 `.hwpx`를 만든 뒤 [@rhwp/core](https://github.com/edwardkim/rhwp)(Rust→WASM, MIT)로 HWP 5.0 파일로 바꿔요.
+
+- WASM이 약 10MB라 **처음 `.hwp`로 저장할 때만** 불러와요. 에디터 본체 번들에는 들어가지 않아요.
+- Vite를 쓰면 사전 번들링이 WASM 경로를 잃지 않도록 제외해 주세요.
+
+  ```ts
+  // vite.config.ts
+  export default defineConfig({ optimizeDeps: { exclude: ['@rhwp/core'] } })
+  ```
+
+- 그래도 WASM을 못 찾으면 `node_modules/@rhwp/core/rhwp_bg.wasm`을 정적 폴더에 복사하고 주소를 넘겨요: `<LegalEditor hwpWasmUrl="/rhwp_bg.wasm" />`
+- 만든 파일은 다시 읽었을 때 제목·조항·번호·표·글자가 그대로인지 검사하지만, **한글 프로그램에서 열리는지는 직접 확인**해 주세요.
+
 ### 조항 라이브러리
 
 `clauses`를 넘기면 오른쪽 패널에 조항 목록이 생겨요. 검색칸에서 제목이나 분류로 찾고, 누르면 커서 위치에 조항이 들어가요. 조항 안의 `{{변수}}`는 입력칸에 바로 나타나고 뒤쪽 조 번호는 알아서 밀려요.
@@ -123,7 +138,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 
 | 이름 | 설명 |
 | --- | --- |
-| `<LegalEditor content values onChange onValuesChange editable autoFees searchCases clauses />` | 에디터 컴포넌트 |
+| `<LegalEditor content values onChange onValuesChange editable autoFees searchCases clauses hwpWasmUrl />` | 에디터 컴포넌트 |
 | `clauses` | 기본 조항 목록 `{ id, title, category, html }[]` |
 | `formatCaseCitation(result)` | 판례 검색 결과 → `대법원 2016. 4. 28. 선고 2015다12345 판결` |
 | `calcStampFee(소가, { electronic })` | 소장 인지액(원) |
@@ -137,6 +152,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 | `fillTemplate(html, values)` | 변수를 채운 완성본 HTML. `.legal-doc` 안에서 렌더하면 번호가 붙어요 |
 | `toDocx(editor.getJSON(), values)` | `.docx` Blob 생성 |
 | `toHwpx(editor.getJSON(), values)` | `.hwpx` Blob 생성 |
+| `toHwp(editor.getJSON(), values, { wasm })` | `.hwp`(HWP 5.0) Blob 생성. `wasm`은 WASM 주소나 바이트(선택) |
 | `toPlainHtml(editor.getJSON(), values)` | 번호가 텍스트로 들어간 독립 HTML |
 | `fromFile(file)` | `.docx` / `.hwp` / `.hwpx`를 에디터용 HTML로 변환 (`fromDocx`, `fromHwp`도 있음) |
 | `normalizeLegalHtml(html)` | "제N조 / ① / 1." 문단을 조·항·호 구조로 변환 |
@@ -148,7 +164,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 ## 로드맵
 
 - [x] HWP / HWPX 열기, HWPX 저장
-- [ ] `.hwp` 바이너리로 바로 저장 ([rhwp](https://github.com/edwardkim/rhwp) 검토)
+- [x] `.hwp` 바이너리로 바로 저장 ([rhwp](https://github.com/edwardkim/rhwp))
 - [ ] 옛 Word `.doc` 열기
 - [ ] 표
 - [ ] 조항 라이브러리(자주 쓰는 조항 끼워 넣기)
