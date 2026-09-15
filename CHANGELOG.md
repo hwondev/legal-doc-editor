@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-09-16
+
 ### Changed
 
 - 전자소송(`electronic`)에서 첨부서류 통수를 채우지 않는 근거를 README와 코드 주석에 적음 — 업무처리지침(재판예규 제1933호) 제23조제3항·제1항, 「민사소송 등에서의 전자문서 이용 등에 관한 법률」 제11조제1항·제12조제1항, 같은 규칙 제29조제2항을 확인한 결과 전자소송에는 소장에 적을 정해진 통수가 없음. 동작은 그대로
@@ -143,7 +145,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.1...HEAD
+[0.16.1]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.15.0...v0.16.0
 [0.15.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.13.0...v0.14.0
