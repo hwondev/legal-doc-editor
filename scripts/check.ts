@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { hwpToText } from 'hwp-convert'
 import { parseMsDoc } from '@file-viewer/doc'
-import { articleTitleLength, docBlocksToHtml, evidenceLabels, toHwp, toHwpx, toPlainHtml } from '../src/io.ts'
+import { articleTitleLength, docBlocksToHtml, EVIDENCE_REF_GROUP, evidenceLabels, evidenceRefPieces, toHwp, toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations, formatCaseCitation } from '../src/citation.ts'
 import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
@@ -99,6 +99,36 @@ const refDoc = {
 }
 assert.deepEqual(evidenceLabels(refDoc), { a: '갑 제1호증', b: '갑 제2호증' })
 assert.match(toPlainHtml(refDoc, {}), /^<p>빌려주었습니다\(갑 제2호증\)\.<\/p>\n<p>갑 제3호증의 기재<\/p>\n<p>1\. 갑 제1호증 차용증<\/p>/)
+
+// 범위·나열 참조: 모양별 글자(전체·뒤쪽·번호만)가 각자 가리키는 증거의 현재 번호로
+const formRef = (id: string, form: string) => ({ type: 'evidenceRef', attrs: { id, label: '', form } })
+const formDoc = {
+  type: 'doc',
+  content: [
+    p(formRef('a', 'full'), t(' 내지 '), formRef('b', 'short'), t(', 갑 제'), formRef('a', 'number'), t(', '), formRef('b', 'number'), t('호증')),
+    evid('new', '새로 넣은 증거'),
+    evid('a', '차용증'),
+    evid('b', '이체 내역'),
+  ],
+}
+assert.match(toPlainHtml(formDoc, {}), /^<p>갑 제2호증 내지 제3호증, 갑 제2, 3호증<\/p>/)
+
+// 본문 참조 묶음 → 글자·참조 조각. 묶음 안 모든 번호의 증거가 있을 때만
+const pieces = (s: string, max = 5) =>
+  [...s.matchAll(EVIDENCE_REF_GROUP)].map((m) => {
+    const ps = evidenceRefPieces(m, (_party, n) => n <= max)
+    return ps && ps.map((x) => (typeof x === 'string' ? x : `<${x.form}:${x.party}${x.n}>`)).join('')
+  })
+assert.deepEqual(pieces('(갑 제3호증의 1)'), ['<full:갑3>']) // 가지번호는 참조 뒤 글자로
+assert.deepEqual(pieces('갑 제1호증 내지 제3호증의 각 기재'), ['<full:갑1> 내지 <short:갑3>'])
+assert.deepEqual(pieces('갑 제1호증 ~ 제2호증'), ['<full:갑1> ~ <short:갑2>'])
+assert.deepEqual(pieces('갑 제1호증, 제2호증, 제4호증'), ['<full:갑1>, <short:갑2>, <short:갑4>'])
+assert.deepEqual(pieces('을 제1, 2호증의 각 기재'), ['을 제<number:을1>, <number:을2>호증'])
+assert.deepEqual(pieces('갑 제1 내지 3호증'), ['갑 제<number:갑1> 내지 <number:갑3>호증'])
+assert.deepEqual(pieces('갑 제1호증, 갑 제2호증'), ['<full:갑1>', '<full:갑2>']) // 당사자를 다시 쓰면 각각
+assert.deepEqual(pieces('갑 제1호증 내지 제9호증'), [null]) // 없는 증거가 섞이면 묶음 전체를 글자로
+assert.deepEqual(pieces('갑 제1, 2호증의 1'), []) // 번호 나열 뒤 가지번호
+assert.deepEqual(pieces('차용증을 제1호증으로'), []) // 조사
 
 const hwpx = new Uint8Array(await (await toHwpx(doc, {})).arrayBuffer())
 assert.deepEqual([...hwpx.slice(0, 2)], [0x50, 0x4b]) // zip
