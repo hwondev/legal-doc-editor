@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations } from '../src/citation.ts'
 import { calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
+import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -121,5 +122,20 @@ assert.equal(fees['원고'], 'A')
 assert.equal(withCourtFees(['소가', '송달료'], { 소가: '30,000,000' }, { unitFee: 5_500 })['송달료'], '110,000원')
 assert.equal(withCourtFees(['소가', '인지액'], { 소가: '20,000,000', 인지액: '직접 입력' })['인지액'], '직접 입력')
 assert.deepEqual(withCourtFees(['인지액'], {}), {}) // 소가가 없으면 그대로
+
+// 금액 한글 표기: "일"을 빼지 않음(일만·일십), 빈 자리·빈 묶음은 건너뜀
+assert.equal(toKoreanAmount(37_200_000), '삼천칠백이십만')
+assert.equal(toKoreanAmount(410_000_000), '사억일천만')
+assert.equal(toKoreanAmount(10_000), '일만')
+assert.equal(toKoreanAmount(100_000_000), '일억')
+assert.equal(toKoreanAmount(1_000_000_000_000), '일조')
+assert.equal(toKoreanAmount(100_010_001), '일억일만일')
+assert.equal(toKoreanAmount(11), '일십일')
+assert.equal(toKoreanAmount(0), '영')
+assert.throws(() => toKoreanAmount(1.5))
+assert.equal(formatAmount(37_200_000), '금 37,200,000원')
+assert.equal(formatAmount(37_200_000, '계약서'), '금 삼천칠백이십만 원정(₩37,200,000)')
+assert.equal(parseAmount('금 37,200,000원'), 37_200_000)
+assert.equal(parseAmount('금액 미정'), 0)
 
 console.log('ok')

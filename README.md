@@ -10,6 +10,7 @@
   - 저장은 `.docx`와 `.hwpx`예요. `.hwpx`는 한글 2014 이상에서 열리고, 한글에서 `.hwp`로 다시 저장할 수 있어요
   - 파일 변환 라이브러리는 필요할 때만 불러와서 에디터 본체 번들은 가벼워요
 - **판례·법령 인용 링크**: 본문의 `민법 제750조`, `대법원 2016. 4. 28. 선고 2015다12345 판결`, `2024가단157033` 같은 인용을 알아보고 [국가법령정보센터](https://www.law.go.kr) 링크를 붙여요 (API 키가 필요 없어요)
+- **금액 표기**: 선택한 숫자를 `금 37,200,000원`이나 `금 삼천칠백이십만 원정(₩37,200,000)`으로 바꿔요
 - **인쇄·PDF**: 비어 있는 변수는 손으로 쓰는 밑줄 칸으로 인쇄돼요
 
 에디터 엔진은 [Tiptap](https://tiptap.dev)(ProseMirror)을, 파일 변환은 [docx](https://github.com/dolanmiu/docx)·[mammoth](https://github.com/mwilliamson/mammoth.js)·[hwp-convert](https://www.npmjs.com/package/hwp-convert)를 씁니다.
@@ -78,6 +79,17 @@ export default function Page() {
 
 > 계산 결과는 **참고용**이에요. 제1심 소장 기준이고 항소·상고·반소는 계산하지 않아요. 실제 납부액은 법원 안내를 확인하세요.
 
+### 금액 표기
+
+본문에서 금액을 선택하고 툴바의 **금액**·**금액(한글)** 버튼을 누르면 선택한 글의 숫자만 뽑아 바꿔요.
+
+| 서식 | 예 |
+| --- | --- |
+| 소장식 | `금 37,200,000원` |
+| 계약서식 | `금 삼천칠백이십만 원정(₩37,200,000)` |
+
+한글 금액은 만 단위로 끊고, 고쳐 쓰기 어렵도록 **"일"을 빼지 않고** 적어요 (`10,000` → 일만, `11` → 일십일, `410,000,000` → 사억일천만).
+
 ## API
 
 | 이름 | 설명 |
@@ -86,6 +98,9 @@ export default function Page() {
 | `calcStampFee(소가, { electronic })` | 소장 인지액(원) |
 | `calcServiceFee({ parties, procedure, unitFee })` | 송달료(원). `procedure`: 소액·단독·합의·항소·상고·조정 |
 | `withCourtFees(names, values, options)` | 비어 있는 `인지액…`·`송달료…` 변수를 계산값으로 채운 입력값 |
+| `toKoreanAmount(n)` | `37200000` → `삼천칠백이십만` |
+| `formatAmount(n, '소장' \| '계약서')` | `금 37,200,000원` / `금 삼천칠백이십만 원정(₩37,200,000)` |
+| `parseAmount(text)` | 글에서 숫자만 뽑기 (`금 37,200,000원` → `37200000`) |
 | `fillTemplate(html, values)` | 변수를 채운 완성본 HTML. `.legal-doc` 안에서 렌더하면 번호가 붙어요 |
 | `toDocx(editor.getJSON(), values)` | `.docx` Blob 생성 |
 | `toHwpx(editor.getJSON(), values)` | `.hwpx` Blob 생성 |

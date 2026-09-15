@@ -10,6 +10,8 @@
 - 판례·법령 인용 자동 인식과 국가법령정보센터 링크 — `findCitations(text)`, `CitationLink` 확장.
   본문의 `대법원 2016. 4. 28. 선고 2015다12345 판결`, `2024가단157033`, `민법 제750조` 같은 표기에
   밑줄과 링크를 덧입힘 (화면 표시만 바뀌고 문서 데이터·내보내기 결과는 그대로)
+- 금액 표기 — `toKoreanAmount`, `formatAmount`, `parseAmount`와 툴바 **금액**·**금액(한글)** 버튼
+  (`금 37,200,000원` / `금 삼천칠백이십만 원정(₩37,200,000)`, "일"을 빼지 않는 표기)
 - 인지액·송달료 계산 — `calcStampFee`, `calcServiceFee`, `withCourtFees`와 `LegalEditor`의 `autoFees` 옵션.
   소가를 넣으면 `{{인지액 산정 필요}}`·`{{송달료}}` 같은 빈칸을 채움 (참고용, 직접 입력한 값 우선)
 - GitHub Actions CI(타입 검사·체크·빌드)와 태그 push 시 npm 자동 배포
