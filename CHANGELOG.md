@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-16
+
 ### Added
 
 - 호증 시작 번호 — 호증 문단 속성 `data-evidence-start`(`<ol start>`처럼 그 문단을 정한 번호로, 다음 호증은 이어서, 당사자별), 툴바 **호증 시작** 버튼, `setEvidenceStart` 명령. 화면·내보내기·본문 참조가 같은 번호를 씀.
@@ -121,7 +123,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.13.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.10.0...v0.11.0
