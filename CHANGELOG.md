@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-15
+
 ### Added
 
 - 옛 Word `.doc`(97–2003) 열기 — `fromDoc`, `fromFile`과 열기 버튼이 `.doc`를 받음. [@file-viewer/doc](https://www.npmjs.com/package/@file-viewer/doc)으로 읽어 글자·표를 옮긴 뒤 기존 구조 정리(제N조·①·1.·빈칸 변수)를 거침. 글자 서식·그림은 옮기지 않음
@@ -60,7 +62,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.2.0...v0.3.0
