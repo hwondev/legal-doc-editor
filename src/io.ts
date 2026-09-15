@@ -22,15 +22,43 @@ const hangulNum = (n: number) => {
 /** 번호 문단 단계별 표시: 1. → 가. → (1) → (가) (legal.css의 p[data-num]::before와 같게) */
 const numLabel = (level: number, n: number) => [`${n}.`, `${hangulNum(n)}.`, `(${n})`, `(${hangulNum(n)})`][level - 1]
 
+/** 호증 표시 "갑 제2호증" */
+export const evidenceText = (party: string, n: number) => `${party} 제${n}호증`
+// 항·호·표 안 문단은 호증 번호를 세지 않음 (flatten의 walk가 이 노드들 안 문단을 번호 문단으로 보지 않는 것과 같은 범위)
+export const EVIDENCE_SKIP = ['orderedList', 'bulletList', 'table']
+
+/** 에디터 JSON → 호증 문단 id별 현재 표시 { id: '갑 제2호증' }. 본문 호증 참조 글자를 만들 때 씀 (legal.css 카운터와 같은 규칙) */
+export function evidenceLabels(doc: JSONContent): Record<string, string> {
+  const labels: Record<string, string> = {}
+  const counts: Record<string, number> = {}
+  const walk = (nodes: JSONContent[] = []) => {
+    for (const n of nodes) {
+      if (EVIDENCE_SKIP.includes(n.type!)) continue
+      if (n.type !== 'paragraph') {
+        walk(n.content)
+        continue
+      }
+      const party: string | undefined = n.attrs?.evidence
+      if (!party) continue
+      counts[party] = (counts[party] ?? 0) + 1
+      if (n.attrs?.evidenceId) labels[n.attrs.evidenceId] = evidenceText(party, counts[party])
+    }
+  }
+  walk(doc.content)
+  return labels
+}
+
 /** 에디터 JSON → 번호(제N조·①·1.)가 텍스트로 박힌 블록 목록. docx/hwpx/HTML 내보내기 공용 */
 function flatten(doc: JSONContent, values: Values): Block[] {
   const out: Block[] = []
   let article = 0
+  const refLabels = evidenceLabels(doc) // 본문 호증 참조 → 가리키는 증거의 현재 번호 (증거가 없어졌으면 참조에 남은 마지막 글자)
 
   const runs = (nodes: JSONContent[] = []): Run[] =>
     nodes.map((n) => {
       if (n.type === 'hardBreak') return { text: '', br: true }
       if (n.type === 'variable') return { text: values[n.attrs!.name] || `[${n.attrs!.name}]` }
+      if (n.type === 'evidenceRef') return { text: refLabels[n.attrs!.id] ?? n.attrs!.label ?? '' }
       const marks = new Set(n.marks?.map((m) => m.type))
       return { text: n.text ?? '', bold: marks.has('bold'), italics: marks.has('italic'), strike: marks.has('strike'), underline: marks.has('underline') }
     })
@@ -41,7 +69,7 @@ function flatten(doc: JSONContent, values: Values): Block[] {
     const party: string | undefined = n.attrs?.evidence
     if (!party) return runs(n.content)
     evidence[party] = (evidence[party] ?? 0) + 1
-    return [{ text: `${party} 제${evidence[party]}호증 ` }, ...runs(n.content)]
+    return [{ text: `${evidenceText(party, evidence[party])} ` }, ...runs(n.content)]
   }
 
   const list = (node: JSONContent, depth: number) =>
@@ -220,6 +248,8 @@ const PLACEHOLDER = /\[\s*([^[\]{}<>"\d=]{1,20}?)\s*\]/g
 // 입증방법 아래 "갑 제N호증". 가지번호(제1호증의 1, 제2호증 1내지 5)·범위(제1호증 내지 제3호증, 제1호증, 제2호증)는 번호를 매기면 뜻이 바뀌어 제외
 const EVIDENCE = /^\s*([갑을병])\s*제\s*(\d+)\s*호증(?!\s*(?:의|내지|[~～,\d]))\s*/
 const EVIDENCE_SECTIONS = /^(입증방법|증명방법|증거방법)$/
+// 본문의 "갑 제N호증" 참조. 앞 글자가 한글이면 조사("차용증을 제1호증")라 제외, 범위(내지·~·"제1호증, 제2호증")는 뒤 번호가 안 따라가서 제외
+const EVIDENCE_REF = /(?<![가-힣])([갑을병])\s*제\s*(\d+)\s*호증(?!\s*(?:내지|[~～]|,\s*제))/g
 
 const NUM_MARKERS: [RegExp, (s: string) => number][] = [
   [/^\s*(\d{1,2})\.(?!\d)\s*/, Number], // 1.  (2026. 같은 연도는 제외)
@@ -291,7 +321,7 @@ function stripPrefix(el: Element, re: RegExp | number) {
  * - 빈 줄 문단 제거, 짧은 첫 줄 → 제목(h1), "청 구 취 지" 같은 소제목 → h3, [빈칸] → {{변수}}
  * - "제N조…" → 조(h2), 연속된 "①…" → 항(ol), 항 바로 뒤 "1. …" → 호(중첩 ol)
  * - 소장식 "1. / 가. / (1) / (가)" → 번호 문단(p[data-num]). 원문 번호가 자동 번호와 같을 때만 바꿈
- * - 입증방법 아래 "갑 제N호증" → 호증 문단(p[data-evidence]). 역시 자동 번호와 같을 때만
+ * - 입증방법 아래 "갑 제N호증" → 호증 문단(p[data-evidence]). 역시 자동 번호와 같을 때만. 본문의 같은 표기는 그 증거를 가리키는 참조(span[data-evidence-ref])로
  * ponytail: 원문 조 번호는 버리고 자동 번호로 다시 매김 (제3조의2 같은 가지번호는 순번으로 바뀜).
  *           "1)·가)" 형식은 아직 글자로 둠
  */
@@ -398,7 +428,30 @@ export function normalizeLegalHtml(html: string) {
         evidence[ev[1]] = Number(ev[2])
         stripPrefix(el, ev[0].length)
         el.setAttribute('data-evidence', ev[1])
+        el.setAttribute('data-evidence-id', `ev-${ev[1]}-${ev[2]}`)
       }
+    }
+  }
+
+  // 본문의 "갑 제N호증" → 호증 참조(span[data-evidence-ref]). 자동 번호로 바꾼 증거가 있을 때만 → 증거 번호가 바뀌면 참조도 따라감
+  const refTexts: Text[] = []
+  const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
+  for (let t = walker.nextNode() as Text | null; t; t = walker.nextNode() as Text | null) refTexts.push(t)
+  for (const t of refTexts) {
+    const frag = doc.createDocumentFragment()
+    let last = 0
+    for (const m of t.data.matchAll(EVIDENCE_REF)) {
+      const n = Number(m[2])
+      if (n < 1 || n > (evidence[m[1]] ?? 0)) continue
+      const span = doc.createElement('span')
+      span.setAttribute('data-evidence-ref', `ev-${m[1]}-${n}`)
+      span.textContent = evidenceText(m[1], n)
+      frag.append(t.data.slice(last, m.index), span)
+      last = m.index! + m[0].length
+    }
+    if (last) {
+      frag.append(t.data.slice(last))
+      t.replaceWith(frag)
     }
   }
   return doc.body.innerHTML

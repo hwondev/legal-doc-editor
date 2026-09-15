@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { hwpToText } from 'hwp-convert'
 import { parseMsDoc } from '@file-viewer/doc'
-import { articleTitleLength, docBlocksToHtml, toHwp, toHwpx, toPlainHtml } from '../src/io.ts'
+import { articleTitleLength, docBlocksToHtml, evidenceLabels, toHwp, toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations, formatCaseCitation } from '../src/citation.ts'
 import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
@@ -83,6 +83,22 @@ assert.equal(
   evHtml,
   '<p>1. 갑 제1호증 차용증</p>\n<p>참고</p>\n<p>2. 갑 제2호증 계좌이체 내역</p>\n<p>을 제1호증 영수증</p>\n<h3><b>첨 부 서 류</b></h3>\n<p>1. 갑 제3호증 추가 증거</p>',
 )
+
+// 본문 호증 참조: 목록보다 앞에 있어도 가리키는 증거의 현재 번호로, 증거가 없어졌으면 참조에 남은 마지막 글자로
+const ref = (id: string, label: string) => ({ type: 'evidenceRef', attrs: { id, label } })
+const evid = (id: string, text: string) => ({ type: 'paragraph', attrs: { num: 1, evidence: '갑', evidenceId: id }, content: [t(text)] })
+const refDoc = {
+  type: 'doc',
+  content: [
+    p(t('빌려주었습니다('), ref('b', '갑 제9호증'), t(').')),
+    p(ref('gone', '갑 제3호증'), t('의 기재')),
+    evid('a', '차용증'),
+    ol(li({ type: 'paragraph', attrs: { evidence: '갑', evidenceId: 'x' }, content: [t('항 안 문단은 세지 않음')] })),
+    evid('b', '이체 내역'),
+  ],
+}
+assert.deepEqual(evidenceLabels(refDoc), { a: '갑 제1호증', b: '갑 제2호증' })
+assert.match(toPlainHtml(refDoc, {}), /^<p>빌려주었습니다\(갑 제2호증\)\.<\/p>\n<p>갑 제3호증의 기재<\/p>\n<p>1\. 갑 제1호증 차용증<\/p>/)
 
 const hwpx = new Uint8Array(await (await toHwpx(doc, {})).arrayBuffer())
 assert.deepEqual([...hwpx.slice(0, 2)], [0x50, 0x4b]) // zip
@@ -212,6 +228,8 @@ for (const t of templates) {
   assert.match(t.html, /<h1>[^<]+<\/h1>/, t.id)
   assert.match(t.html, /\{\{[^{}]+\}\}/, t.id)
   assert.doesNotMatch(t.html, /\d{6}-\d{7}|01[016789]-\d{3,4}-\d{4}/, t.id)
+  // 본문 호증 참조는 문서 안에 있는 호증 문단 id를 가리켜야 함
+  for (const [, id] of t.html.matchAll(/data-evidence-ref="([^"]+)"/g)) assert.ok(t.html.includes(`data-evidence-id="${id}"`), `${t.id}: ${id}`)
 }
 // 지급명령은 인지액이 소장의 10분의 1이라, 소장 기준 autoFees가 채우는 이름(인지액…·송달료…)을 쓰지 않음
 assert.doesNotMatch(templates.find((t) => t.id === 'payment-order')!.html, /\{\{(인지액|인지대|송달료)/)
