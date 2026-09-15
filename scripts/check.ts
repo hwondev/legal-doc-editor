@@ -100,6 +100,22 @@ const refDoc = {
 assert.deepEqual(evidenceLabels(refDoc), { a: '갑 제1호증', b: '갑 제2호증' })
 assert.match(toPlainHtml(refDoc, {}), /^<p>빌려주었습니다\(갑 제2호증\)\.<\/p>\n<p>갑 제3호증의 기재<\/p>\n<p>1\. 갑 제1호증 차용증<\/p>/)
 
+// 호증 시작 번호: 그 문단을 정한 번호로, 다음 호증은 이어서. 다른 당사자는 따로 1부터. 참조도 같은 번호
+const startDoc = {
+  type: 'doc',
+  content: [
+    p(ref('s5', ''), t(' 내지 '), { type: 'evidenceRef', attrs: { id: 's6', label: '', form: 'short' } }),
+    { type: 'paragraph', attrs: { num: 1, evidence: '갑', evidenceId: 's5', evidenceStart: 5 }, content: [t('준비서면 첫 증거')] },
+    { type: 'paragraph', attrs: { num: 1, evidence: '갑', evidenceId: 's6' }, content: [t('다음 증거')] },
+    { type: 'paragraph', attrs: { evidence: '을', evidenceId: 'e1' }, content: [t('을은 따로')] },
+  ],
+}
+assert.equal(
+  toPlainHtml(startDoc, {}),
+  '<p>갑 제5호증 내지 제6호증</p>\n<p>1. 갑 제5호증 준비서면 첫 증거</p>\n<p>2. 갑 제6호증 다음 증거</p>\n<p>을 제1호증 을은 따로</p>',
+)
+assert.deepEqual(evidenceLabels(startDoc), { s5: '갑 제5호증', s6: '갑 제6호증', e1: '을 제1호증' })
+
 // 범위·나열 참조: 모양별 글자(전체·뒤쪽·번호만)가 각자 가리키는 증거의 현재 번호로
 const formRef = (id: string, form: string) => ({ type: 'evidenceRef', attrs: { id, label: '', form } })
 const formDoc = {

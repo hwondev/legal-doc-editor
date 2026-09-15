@@ -45,7 +45,7 @@ export function evidenceNumbers(doc: JSONContent): Record<string, { party: strin
       }
       const party: string | undefined = n.attrs?.evidence
       if (!party) continue
-      counts[party] = (counts[party] ?? 0) + 1
+      counts[party] = n.attrs?.evidenceStart ?? (counts[party] ?? 0) + 1
       if (n.attrs?.evidenceId) numbers[n.attrs.evidenceId] = { party, n: counts[party] }
     }
   }
@@ -80,7 +80,7 @@ function flatten(doc: JSONContent, values: Values): Block[] {
   const para = (n: JSONContent): Run[] => {
     const party: string | undefined = n.attrs?.evidence
     if (!party) return runs(n.content)
-    evidence[party] = (evidence[party] ?? 0) + 1
+    evidence[party] = n.attrs?.evidenceStart ?? (evidence[party] ?? 0) + 1 // 시작 번호가 있으면 그 번호부터
     return [{ text: `${evidenceText(party, evidence[party])} ` }, ...runs(n.content)]
   }
 
@@ -383,6 +383,7 @@ export function normalizeLegalHtml(html: string) {
   const counts = [0, 0, 0, 0, 0] // 번호 문단 단계별 현재 번호 (flatten·legal.css와 같은 규칙)
   const runs = [0, 0, 0, 0, 0] // 단계별로 글자로 둔 채 이어지는 번호 (1.부터 다시 시작한 하위 목록)
   const evidence: Record<string, number> = {} // 당사자별 호증 번호 (flatten·legal.css와 같은 규칙: 문서 전체에서 이어 셈)
+  const firstEvidence: Record<string, number> = {} // 당사자별 첫 호증 번호 (준비서면은 5부터일 수 있음)
   let inEvidence = false // 입증방법 소제목 아래인지
   for (const el of [...doc.body.children]) {
     const text = el.textContent ?? ''
@@ -457,12 +458,18 @@ export function normalizeLegalHtml(html: string) {
         runs[m.level] = m.n === 1 ? 1 : 0
       }
       // 번호 표시를 뗀 뒤 "갑 제N호증"으로 시작하면 호증 문단으로. 번호가 글자로 남은 문단은 "3. 갑…"이라 걸리지 않음
+      // 그 당사자의 첫 호증은 번호가 1이 아니어도 시작 번호로 받음(준비서면의 "갑 제5호증"부터), 다음부터는 차례대로일 때만
       const ev = inEvidence ? el.textContent!.match(EVIDENCE) : null
-      if (ev && Number(ev[2]) === (evidence[ev[1]] ?? 0) + 1) {
-        evidence[ev[1]] = Number(ev[2])
+      const evN = ev ? Number(ev[2]) : 0
+      if (ev && evN >= 1 && (evidence[ev[1]] === undefined || evN === evidence[ev[1]] + 1)) {
+        if (evidence[ev[1]] === undefined) {
+          firstEvidence[ev[1]] = evN
+          if (evN > 1) el.setAttribute('data-evidence-start', String(evN))
+        }
+        evidence[ev[1]] = evN
         stripPrefix(el, ev[0].length)
         el.setAttribute('data-evidence', ev[1])
-        el.setAttribute('data-evidence-id', `ev-${ev[1]}-${ev[2]}`)
+        el.setAttribute('data-evidence-id', `ev-${ev[1]}-${evN}`)
       }
     }
   }
@@ -476,7 +483,8 @@ export function normalizeLegalHtml(html: string) {
     const frag = doc.createDocumentFragment()
     let last = 0
     for (const m of t.data.matchAll(EVIDENCE_REF_GROUP)) {
-      const pieces = evidenceRefPieces(m, (party, n) => n <= (evidence[party] ?? 0))
+      // 목록에 있는 번호만 (갑 제5호증부터인 준비서면에서 앞 서면의 "갑 제1호증"은 글자로)
+      const pieces = evidenceRefPieces(m, (party, n) => n >= (firstEvidence[party] ?? Infinity) && n <= evidence[party])
       if (!pieces) continue
       frag.append(t.data.slice(last, m.index))
       for (const piece of pieces) {

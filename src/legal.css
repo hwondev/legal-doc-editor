@@ -47,6 +47,10 @@
 .legal-doc > p[data-evidence="병"]::before { counter-increment: le-ev3; }
 .legal-doc > p[data-evidence]::before { content: var(--le-ev); }
 .legal-doc > p[data-num][data-evidence]::before { content: var(--le-num) '\a0' var(--le-ev); }
+/* 호증 시작 번호(data-evidence-start, 준비서면의 갑 제5호증부터): 이 문단에선 늘리지 않고 style의 --le-ev-start로 정함 */
+.legal-doc > p[data-evidence="갑"][data-evidence-start]::before { counter-increment: none; counter-set: le-ev1 var(--le-ev-start); }
+.legal-doc > p[data-evidence="을"][data-evidence-start]::before { counter-increment: none; counter-set: le-ev2 var(--le-ev-start); }
+.legal-doc > p[data-evidence="병"][data-evidence-start]::before { counter-increment: none; counter-set: le-ev3 var(--le-ev-start); }
 /* 본문 호증 참조(evidence.ts): 증거 번호를 따라 글자가 바뀜. 가리키던 증거가 없으면 빨간 밑줄 */
 .legal-doc .le-ref { border-bottom: 1px dotted #9aa5b1; }
 .legal-doc .le-ref[data-missing] { border-bottom: 2px solid #d9534f; color: #b52b27; }
