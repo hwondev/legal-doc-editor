@@ -291,6 +291,17 @@ assert.deepEqual(
   ['준비서면 (원고)', '준비서면 (피고)'],
 )
 
+// 템플릿 분류: 원고·신청인 → 피고 → 기타 순으로 묶임 (조항 라이브러리의 groupClauses를 템플릿에도 씀)
+assert.deepEqual(
+  groupClauses(templates).map(([cat, items]) => [cat, items.map((t) => t.id)]),
+  [
+    ['원고·신청인', ['complaint-loan', 'complaint-debt-nonexistence', 'preparatory-brief', 'payment-order']],
+    ['피고', ['answer', 'preparatory-brief-defendant']],
+    ['기타', ['debt-nonexistence-certificate', 'criminal-complaint-fraud', 'certified-letter']],
+  ],
+)
+assert.deepEqual(groupClauses(templates, { query: '준비서면' }).map(([cat, items]) => [cat, items.length]), [['원고·신청인', 1], ['피고', 1]])
+
 // 금액 한글 표기: "일"을 빼지 않음(일만·일십), 빈 자리·빈 묶음은 건너뜀
 assert.equal(toKoreanAmount(37_200_000), '삼천칠백이십만')
 assert.equal(toKoreanAmount(410_000_000), '사억일천만')
@@ -309,7 +320,7 @@ assert.equal(parseAmount('금액 미정'), 0)
 // 문서 템플릿: 제목·변수가 있고, 실제 주민등록번호·전화번호 형식이 들어가지 않음
 assert.deepEqual(
   templates.map((t) => t.id),
-  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'answer', 'preparatory-brief', 'preparatory-brief-defendant', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
+  ['complaint-loan', 'complaint-debt-nonexistence', 'preparatory-brief', 'payment-order', 'answer', 'preparatory-brief-defendant', 'debt-nonexistence-certificate', 'criminal-complaint-fraud', 'certified-letter'],
 )
 for (const t of templates) {
   assert.match(t.html, /<h1>[^<]+<\/h1>/, t.id)

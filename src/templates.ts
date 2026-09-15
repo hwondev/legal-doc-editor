@@ -1,9 +1,15 @@
 export interface Template {
   id: string
   title: string
+  /** 분류: 원고·신청인 / 피고 / 기타 — `groupClauses(templates)`로 묶어 보여줄 때 씀 */
+  category: string
   description: string
   html: string
 }
+
+// 템플릿 목록은 분류 순서대로 내보냄 (같은 분류 안에서는 아래 적은 순서 그대로 — sort는 안정 정렬)
+const CATEGORY_ORDER = ['원고·신청인', '피고', '기타']
+const byCategory = (a: Template, b: Template) => CATEGORY_ORDER.indexOf(a.category) - CATEGORY_ORDER.indexOf(b.category)
 
 /*
  * 기본 문서 템플릿. 법원·수사기관이 공개한 양식의 항목 순서를 따르고 문장은 새로 씀.
@@ -31,6 +37,7 @@ export const templates: Template[] = [
   {
     id: 'complaint-loan',
     title: '소장 (대여금)',
+    category: '원고·신청인',
     description: '빌려준 돈을 돌려받기 위한 민사 소장. 소가를 넣으면 인지액·송달료가 채워져요(autoFees)',
     html: `
 <h1>소 장</h1>
@@ -73,6 +80,7 @@ export const templates: Template[] = [
   {
     id: 'complaint-debt-nonexistence',
     title: '소장 (채무부존재확인)',
+    category: '원고·신청인',
     description: '상대방이 없는 빚을 있다고 주장할 때 채무가 없다는 확인을 구하는 민사 소장. 소가는 확인을 구하는 권리의 가액(인지규칙 제12조제1호)으로 직접 적어요',
     html: `
 <h1>소 장</h1>
@@ -116,6 +124,7 @@ export const templates: Template[] = [
   {
     id: 'debt-nonexistence-certificate',
     title: '채무부존재 확인서',
+    category: '기타',
     description: '빚을 다 갚았거나 합의한 뒤 채권자가 더 받을 돈이 없다고 확인해 주는 문서. 채권자·채무자가 서명해 한 부씩 보관',
     html: `
 <h1>채 무 부 존 재 확 인 서</h1>
@@ -139,6 +148,7 @@ export const templates: Template[] = [
   {
     id: 'answer',
     title: '답변서',
+    category: '피고',
     description: '소장을 받은 피고가 원고의 청구를 다툴 때 내는 답변서. 소장 부본을 송달받은 날부터 30일 이내에 내야 해요(민사소송법 제256조제1항)',
     html: `
 <h1>답 변 서</h1>
@@ -175,6 +185,7 @@ export const templates: Template[] = [
   {
     id: 'preparatory-brief',
     title: '준비서면 (원고)',
+    category: '원고·신청인',
     description: '변론을 서면으로 준비하는 준비서면. 새 주장이 있으면 변론기일 7일 전까지 상대방에게 송달되게 내고, 30쪽을 넘지 않게 써요(민사소송규칙 제69조의3·제69조의4). 앞 서면의 증거에 이어 번호를 매기려면 첫 호증에서 호증 시작',
     html: `
 <h1>준 비 서 면</h1>
@@ -204,6 +215,7 @@ export const templates: Template[] = [
   {
     id: 'preparatory-brief-defendant',
     title: '준비서면 (피고)',
+    category: '피고',
     description: '피고가 변론을 서면으로 준비하는 준비서면. 새 주장이 있으면 변론기일 7일 전까지 상대방에게 송달되게 내고, 30쪽을 넘지 않게 써요(민사소송규칙 제69조의3·제69조의4). 답변서의 증거에 이어 번호를 매기려면 첫 호증에서 호증 시작',
     html: `
 <h1>준 비 서 면</h1>
@@ -233,6 +245,7 @@ export const templates: Template[] = [
   {
     id: 'criminal-complaint-fraud',
     title: '고소장 (사기)',
+    category: '기타',
     description: '돈을 속아서 보낸 경우 수사기관에 내는 고소장. 경찰청 표준 고소장의 항목 순서',
     html: `
 <h1>고 소 장</h1>
@@ -278,6 +291,7 @@ export const templates: Template[] = [
   {
     id: 'certified-letter',
     title: '내용증명',
+    category: '기타',
     description: '돈을 돌려달라고 요구하는 내용증명 우편. 소송 전에 요구 사실을 남겨 둘 때',
     html: `
 <h1>내 용 증 명</h1>
@@ -299,6 +313,7 @@ export const templates: Template[] = [
   {
     id: 'payment-order',
     title: '지급명령 신청서',
+    category: '원고·신청인',
     description: '재판 없이 법원의 지급명령을 받는 독촉절차 신청서. 인지대는 소장의 10분의 1, 송달료는 당사자 수 × 6회분',
     html: `
 <h1>지 급 명 령 신 청 서</h1>
@@ -326,4 +341,4 @@ export const templates: Template[] = [
 <p>{{관할 법원}} 귀중</p>
 `,
   },
-]
+].sort(byCategory)

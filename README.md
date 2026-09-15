@@ -13,7 +13,7 @@
   - 파일 변환 라이브러리는 필요할 때만 불러와서 에디터 본체 번들은 가벼워요
 - **판례·법령 인용 링크**: 본문의 `민법 제750조`, `대법원 2016. 4. 28. 선고 2015다12345 판결`, `2024가단157033` 같은 인용을 알아보고 [국가법령정보센터](https://www.law.go.kr) 링크를 붙여요 (API 키가 필요 없어요)
 - **조항 라이브러리**: 비밀유지·계약해지·관할법원 같은 자주 쓰는 조항을 골라 커서 위치에 넣어요. 조 번호는 알아서 다시 매겨져요
-- **문서 템플릿**: 소장(대여금)·소장(채무부존재확인)·채무부존재 확인서·답변서·준비서면(원고·피고)·고소장(사기)·내용증명·지급명령 신청서를 `{{변수}}` 빈칸이 들어간 상태로 바로 시작해요
+- **문서 템플릿**: 소장(대여금)·소장(채무부존재확인)·채무부존재 확인서·답변서·준비서면(원고·피고)·고소장(사기)·내용증명·지급명령 신청서를 `{{변수}}` 빈칸이 들어간 상태로 바로 시작해요 (원고·신청인 / 피고 / 기타로 분류)
 - **금액 표기**: 선택한 숫자를 `금 37,200,000원`이나 `금 삼천칠백이십만 원정(₩37,200,000)`으로 바꿔요
 - **인쇄·PDF**: 비어 있는 변수는 손으로 쓰는 밑줄 칸으로 인쇄돼요
 
@@ -153,13 +153,13 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 | --- | --- |
 | `<LegalEditor content values onChange onValuesChange editable autoFees searchCases clauses hwpWasmUrl />` | 에디터 컴포넌트 |
 | `clauses` | 기본 조항 목록 `{ id, title, category, html }[]` |
-| `groupClauses(clauses, { category, query })` | 조항을 분류별로 묶음 `[분류, 조항[]][]` (분류 선택·검색 적용) |
+| `groupClauses(clauses, { category, query })` | 조항·템플릿을 분류별로 묶음 `[분류, 항목[]][]` (분류 선택·검색 적용) — `groupClauses(templates)` |
 | `formatCaseCitation(result)` | 판례 검색 결과 → `대법원 2016. 4. 28. 선고 2015다12345 판결` |
 | `calcStampFee(소가, { electronic })` | 소장 인지액(원) |
 | `calcPaymentOrderStampFee(청구금액)` | 지급명령 신청서 인지대(원) — 종이 신청 기준 |
 | `calcServiceFee({ parties, procedure, unitFee })` | 송달료(원). `procedure`: 소액·단독·합의·항소·상고·조정·독촉 |
 | `withCourtFees(names, values, options)` | 비어 있는 `인지액…`·`송달료…` 변수를 계산값으로 채운 입력값 |
-| `templates` | 기본 문서 템플릿 `{ id, title, description, html }[]` — `<LegalEditor content={templates[0].html} />` |
+| `templates` | 기본 문서 템플릿 `{ id, title, category, description, html }[]` (분류 순서: 원고·신청인 → 피고 → 기타) — `<LegalEditor content={templates[0].html} />` |
 | `toKoreanAmount(n)` | `37200000` → `삼천칠백이십만` |
 | `formatAmount(n, '소장' \| '계약서')` | `금 37,200,000원` / `금 삼천칠백이십만 원정(₩37,200,000)` |
 | `parseAmount(text)` | 글에서 숫자만 뽑기 (`금 37,200,000원` → `37200000`) |
