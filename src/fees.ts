@@ -61,6 +61,8 @@ export interface CourtFeeOptions {
   electronic?: boolean
   /** 원고 + 피고 수 (기본 2) */
   parties?: number
+  /** 상대방(피고) 수 — 첨부서류 통수에 씀. 기본은 parties − 1 (원고 1명), 최소 1 */
+  opponents?: number
   unitFee?: number
 }
 
@@ -68,16 +70,23 @@ const won = (n: number) => `${n.toLocaleString('ko-KR')}원`
 const digits = (s = '') => Number(s.replace(/[^\d]/g, '')) || 0
 
 /**
- * 비어 있는 비용 변수를 계산값으로 채움. 직접 입력한 값은 덮어쓰지 않음.
+ * 비어 있는 비용·통수 변수를 계산값으로 채움. 직접 입력한 값은 덮어쓰지 않음.
  * - 소장: `소가`(또는 `소송목적의 값`) → 이름이 `인지액`·`송달료`로 시작하는 변수 (소가 3천만원 이하 소액 10회분, 넘으면 15회분)
  * - 지급명령: `청구금액` → `독촉절차 인지대`(소장의 10분의 1)·`독촉절차 송달료`(6회분)·`독촉절차비용`(두 금액 합계)
+ * - 첨부서류: `입증방법 통수`(상대방 수 + 1)·`소장 부본 통수`(상대방 수) — 소가 없이도 채움
  */
 export function withCourtFees(names: string[], values: Values, opts: CourtFeeOptions = {}): Values {
   const amountOf = (re: RegExp) => digits(values[names.find((n) => re.test(n)) ?? ''])
   const out = { ...values }
-  const fill = (re: RegExp, value: number) => {
-    for (const n of names) if (re.test(n) && !values[n]?.trim()) out[n] = won(value)
+  let filled = false
+  const fillText = (re: RegExp, text: string) => {
+    for (const n of names)
+      if (re.test(n) && !values[n]?.trim()) {
+        out[n] = text
+        filled = true
+      }
   }
+  const fill = (re: RegExp, value: number) => fillText(re, won(value))
   const parties = opts.parties ?? 2
 
   const amount = amountOf(/^(소가|소송목적의\s*값)/)
@@ -97,5 +106,17 @@ export function withCourtFees(names: string[], values: Values, opts: CourtFeeOpt
     // 합계는 직접 입력한 인지대·송달료가 있으면 그 값으로 더함
     fill(/^독촉절차\s*비용/, (amountOf(STAMP) || stamp) + (amountOf(SERVICE) || service))
   }
-  return amount || claim ? out : values
+
+  /*
+   * 첨부서류 통수. 「민사소송규칙」 제105조제2항: 서증은 상대방의 수에 1을 더한 수의 사본, 제48조제1항: 송달에 필요한 수의 부본
+   * 출처: https://www.law.go.kr/법령/민사소송규칙 (확인 2026-09-16),
+   *   대한법률구조공단 첨부서류 작성방법 https://support.klac.or.kr/front/contents/lawsuit/011.do ("위 입증방법 각 2통", 소장 부본은 피고 1명이면 1부·2명이면 2부)
+   * ponytail: 종이 제출 기준. 전자소송 제출 통수는 공식 안내로 확인하지 못해 electronic이면 채우지 않음
+   */
+  if (!opts.electronic) {
+    const opponents = Math.max(1, opts.opponents ?? parties - 1)
+    fillText(/^입증방법\s*통수/, `${opponents + 1}통`)
+    fillText(/^소장\s*부본\s*통수/, `${opponents}통`)
+  }
+  return filled ? out : values
 }
