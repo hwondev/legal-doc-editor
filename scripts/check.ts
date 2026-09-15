@@ -1,7 +1,7 @@
 // 번호 매기기·이스케이프·hwpx 생성·인용 인식 확인 (DOM 없이 도는 부분만). 실행: npm run check
 import assert from 'node:assert/strict'
 import { toHwpx, toPlainHtml } from '../src/io.ts'
-import { findCitations } from '../src/citation.ts'
+import { findCitations, formatCaseCitation } from '../src/citation.ts'
 import { calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
 import { templates } from '../src/templates.ts'
@@ -151,5 +151,14 @@ for (const t of templates) {
 }
 // 지급명령은 인지액이 소장의 10분의 1이라, 소장 기준 autoFees가 채우는 이름(인지액…·송달료…)을 쓰지 않음
 assert.doesNotMatch(templates.find((t) => t.id === 'payment-order')!.html, /\{\{(인지액|인지대|송달료)/)
+
+// 판례 검색 결과 → 인용 문구. 넣은 문구가 다시 인용으로 인식돼야 링크가 붙음
+const found = { court: '대법원', date: '20160428', caseNo: '2015다12345', title: '예시', url: 'https://www.law.go.kr' }
+assert.equal(formatCaseCitation(found), '대법원 2016. 4. 28. 선고 2015다12345 판결')
+assert.equal(formatCaseCitation({ ...found, date: '2016-04-28', kind: '판결' }), '대법원 2016. 4. 28. 선고 2015다12345 판결')
+const decision = { ...found, date: '2020.01.09', caseNo: '2019마123', kind: '결정' }
+assert.equal(formatCaseCitation(decision), '대법원 2020. 1. 9.자 2019마123 결정')
+assert.deepEqual(cites(formatCaseCitation(found)), ['case:대법원 2016. 4. 28. 선고 2015다12345 판결'])
+assert.deepEqual(cites(formatCaseCitation(decision)), ['case:대법원 2020. 1. 9.자 2019마123 결정'])
 
 console.log('ok')

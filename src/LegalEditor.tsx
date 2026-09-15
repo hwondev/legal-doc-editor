@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit'
 import { TableKit } from '@tiptap/extension-table'
 import { Variable, toChips, type Values } from './variable'
 import { Numbering } from './numbering'
-import { CitationLink } from './citation'
+import { CitationLink, formatCaseCitation, type CaseResult } from './citation'
 import { withCourtFees, type CourtFeeOptions } from './fees'
 import { formatAmount, parseAmount } from './amount'
 import { fromFile, toDocx, toHwpx } from './io'
@@ -20,6 +20,8 @@ export interface LegalEditorProps {
   editable?: boolean
   /** 입력값에 `소가`가 있으면 `인지액…`·`송달료…` 변수를 계산해 채움 (직접 입력한 값이 우선, 참고용) */
   autoFees?: boolean | CourtFeeOptions
+  /** 판례 검색 함수. 넘기면 오른쪽에 판례 검색 칸이 생기고, 결과를 누르면 인용 문구가 커서 위치에 들어감 */
+  searchCases?: (query: string) => Promise<CaseResult[]>
 }
 
 function varNames(editor: Editor) {
@@ -46,9 +48,12 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 
-export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees }: LegalEditorProps) {
+export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases }: LegalEditorProps) {
   const [values, setValues] = useState(initial)
   const [names, setNames] = useState<string[]>([])
+  const [caseQuery, setCaseQuery] = useState('')
+  const [cases, setCases] = useState<CaseResult[] | null>(null)
+  const [caseStatus, setCaseStatus] = useState('')
   // 화면·저장에 쓰는 값 = 입력값 + (autoFees면) 비어 있는 인지액·송달료 계산값
   const shown = autoFees ? withCourtFees(names, values, autoFees === true ? {} : autoFees) : values
 
@@ -96,6 +101,20 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
   const save = async (to: typeof toDocx, ext: string) => {
     const title = editor!.state.doc.firstChild?.textContent.trim() || '문서'
     download(await to(editor!.getJSON(), shown), `${title}.${ext}`)
+  }
+
+  // ponytail: 늦게 도착한 이전 검색 결과가 덮어쓸 수 있음 — 필요해지면 요청 번호로 막기
+  const runCaseSearch = async () => {
+    const q = caseQuery.trim()
+    if (!searchCases || !q) return
+    setCaseStatus('검색 중…')
+    try {
+      setCases(await searchCases(q))
+      setCaseStatus('')
+    } catch (err) {
+      setCases(null)
+      setCaseStatus(`검색하지 못했어요: ${(err as Error).message}`)
+    }
   }
 
   const cmd = () => editor!.chain().focus()
@@ -149,6 +168,40 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
           </label>
         ))}
+        {searchCases && (
+          <section className="le-cases">
+            <h3>판례 검색</h3>
+            {/* 에디터가 다른 앱의 form 안에 들어갈 수 있어 form 대신 Enter로 검색 */}
+            <div className="le-cases-bar">
+              <input
+                value={caseQuery}
+                placeholder="사건명·사건번호·키워드"
+                onChange={(e) => setCaseQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                    e.preventDefault()
+                    runCaseSearch()
+                  }
+                }}
+              />
+              <button type="button" onClick={runCaseSearch}>검색</button>
+            </div>
+            {caseStatus && <p className="le-hint">{caseStatus}</p>}
+            {!caseStatus && cases?.length === 0 && <p className="le-hint">결과가 없어요.</p>}
+            <ul className="le-case-list">
+              {cases?.map((c) => (
+                <li key={`${c.caseNo}-${c.date}`}>
+                  <button type="button" disabled={!editable} title="커서 위치에 인용 넣기" onClick={() => editor?.chain().focus().insertContent(formatCaseCitation(c)).run()}>
+                    <strong>{c.title}</strong>
+                    <span>{formatCaseCitation(c)}</span>
+                    {c.summary && <small>{c.summary}</small>}
+                  </button>
+                  <a href={c.url} target="_blank" rel="noopener noreferrer">원문</a>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </aside>
     </div>
   )

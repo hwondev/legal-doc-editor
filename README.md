@@ -67,6 +67,16 @@ export default function Page() {
 
 날짜(`2026. 9. 2.`), 전화번호, 계좌번호는 인용으로 보지 않아요. 다만 인용 인식은 글자 모양만 보는 것이라 놓치거나 잘못 잡을 수 있고, 링크가 가리키는 조문이 실제로 맞는지는 직접 확인해 주세요.
 
+### 판례 검색
+
+`searchCases`에 검색 함수를 넘기면 오른쪽 패널에 **판례 검색** 칸이 생겨요. 결과를 누르면 커서 위치에 `대법원 2016. 4. 28. 선고 2015다12345 판결` 같은 인용 문구가 들어가고, 인용 링크도 자동으로 붙어요.
+
+```tsx
+<LegalEditor searchCases={async (q) => (await fetch(`/api/cases?q=${encodeURIComponent(q)}`)).json()} />
+```
+
+라이브러리는 검색을 직접 부르지 않아요. 국가법령정보 공동활용 API는 발급받은 인증값이 필요해서 서버를 거쳐야 하거든요. 연결 예제는 [`examples/law-go-kr-proxy`](./examples/law-go-kr-proxy)에 있어요.
+
 ### 인지액·송달료 자동 계산
 
 `<LegalEditor autoFees />`로 켜면, 입력값 `소가`(또는 `소송목적의 값`)를 넣었을 때 이름이 `인지액`·`송달료`로 시작하는 변수(예: `{{인지액 산정 필요}}`)를 계산해서 채워요. 직접 입력한 값이 있으면 그 값을 써요.
@@ -95,7 +105,8 @@ export default function Page() {
 
 | 이름 | 설명 |
 | --- | --- |
-| `<LegalEditor content values onChange onValuesChange editable autoFees />` | 에디터 컴포넌트 |
+| `<LegalEditor content values onChange onValuesChange editable autoFees searchCases />` | 에디터 컴포넌트 |
+| `formatCaseCitation(result)` | 판례 검색 결과 → `대법원 2016. 4. 28. 선고 2015다12345 판결` |
 | `calcStampFee(소가, { electronic })` | 소장 인지액(원) |
 | `calcServiceFee({ parties, procedure, unitFee })` | 송달료(원). `procedure`: 소액·단독·합의·항소·상고·조정 |
 | `withCourtFees(names, values, options)` | 비어 있는 `인지액…`·`송달료…` 변수를 계산값으로 채운 입력값 |

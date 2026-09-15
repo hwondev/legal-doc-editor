@@ -69,6 +69,18 @@
 .le-panel input { padding: 6px 8px; border: 1px solid #d0d4da; border-radius: 6px; font: inherit; }
 .le-hint { margin: 0; color: #777; font-size: 13px; }
 
+/* 판례 검색 (searchCases) */
+.le-cases { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e3e6ea; }
+.le-cases-bar { display: flex; gap: 4px; margin-bottom: 8px; }
+.le-cases-bar input { flex: 1; min-width: 0; }
+.le-cases-bar button, .le-case-list button { padding: 4px 8px; border: 1px solid #d0d4da; border-radius: 6px; background: #fff; cursor: pointer; font: inherit; }
+.le-case-list { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.le-case-list li { display: grid; gap: 2px; }
+.le-case-list button { display: grid; gap: 2px; text-align: left; font-size: 12px; }
+.le-case-list button:hover:not(:disabled) { background: #f3f5f8; }
+.le-case-list span, .le-case-list small { color: #555; }
+.le-case-list a { justify-self: end; color: #3a56b4; font-size: 12px; }
+
 @media (max-width: 800px) {
   .le-root { grid-template-columns: 1fr; }
   .legal-doc { padding: 32px 24px; }

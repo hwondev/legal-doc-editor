@@ -29,6 +29,16 @@ const nda = `
 
 const options = [{ id: 'nda', title: '비밀유지계약서 (예시)', html: nda }, ...templates]
 
+// 데모용 가짜 검색 결과 — 실제 판례가 아님(2099년 사건번호). 실제 연결은 examples/law-go-kr-proxy 참고
+const demoSearchCases = async (q: string) => {
+  const search = `https://www.law.go.kr/LSW/precSc.do?query=${encodeURIComponent(q)}`
+  return [
+    { court: '대법원', date: '20990115', caseNo: '2099다1', title: `(예시) ${q} — 대법원 판결`, kind: '판결', url: search },
+    { court: '서울고등법원', date: '2099-02-20', caseNo: '2099나2', title: `(예시) ${q} — 항소심 판결`, kind: '판결', url: search },
+    { court: '대법원', date: '2099.03.05', caseNo: '2099마3', title: `(예시) ${q} — 대법원 결정`, kind: '결정', url: search },
+  ]
+}
+
 function Demo() {
   const [id, setId] = useState(options[0].id)
   const current = options.find((o) => o.id === id)!
@@ -45,7 +55,7 @@ function Demo() {
         </select>
       </label>
       {/* 템플릿을 바꾸면 에디터를 새로 만듦 (content는 처음 한 번만 읽음) */}
-      <LegalEditor key={id} content={current.html} values={id === 'nda' ? { 갑: '주식회사 가나다' } : {}} autoFees />
+      <LegalEditor key={id} content={current.html} values={id === 'nda' ? { 갑: '주식회사 가나다' } : {}} autoFees searchCases={demoSearchCases} />
     </>
   )
 }
