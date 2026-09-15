@@ -41,6 +41,10 @@
 .legal-doc > p[data-num="2"]::before { content: counter(le-n2, hangul) '.'; }
 .legal-doc > p[data-num="3"]::before { content: '(' counter(le-n3) ')'; }
 .legal-doc > p[data-num="4"]::before { content: '(' counter(le-n4, hangul) ')'; }
+/* 판례·법령 인용 — 본문 데이터는 그대로 두고 화면에서만 밑줄·링크를 덧입힘 (citation.ts) */
+.legal-doc .le-cite { color: inherit; text-decoration: underline dotted #3a56b4; text-underline-offset: 3px; cursor: pointer; }
+.legal-doc .le-cite:hover { background: #eef2ff; }
+
 .legal-doc .tableWrapper { overflow-x: auto; }
 .legal-doc table { width: 100%; border-collapse: collapse; margin: 0.6em 0; font-size: 0.93em; }
 .legal-doc td, .legal-doc th { border: 1px solid #555; padding: 3px 6px; vertical-align: top; }
@@ -75,6 +79,7 @@
   .le-printing .legal-doc, .le-printing .legal-doc * { visibility: visible; }
   .le-printing .legal-doc { position: absolute; top: 0; left: 0; width: 100%; max-width: none; padding: 0; box-shadow: none; }
   .le-printing .le-var { padding: 0; background: none; color: inherit; }
+  .le-printing .le-cite { text-decoration: none; background: none; }
   /* 빈 값은 손으로 쓰는 밑줄 칸 */
   .le-printing .le-var--empty { color: transparent; border-bottom: 1px solid #000; }
 }

@@ -22,6 +22,8 @@ const template = `
 <p style="text-align:center">{{계약일}}</p>
 <p>갑: {{갑}} (인)</p>
 <p>을: {{을}} (인)</p>
+<p>&nbsp;</p>
+<p>※ 인용 표기 예시 — 민법 제750조, 대법원 2016. 4. 28. 선고 2015다12345 판결 (밑줄에 Ctrl·⌘+클릭하면 국가법령정보센터가 열려요)</p>
 `
 
 createRoot(document.getElementById('root')!).render(
