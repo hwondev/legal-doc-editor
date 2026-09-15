@@ -6,10 +6,13 @@ export interface Clause {
   html: string
 }
 
-/** 분류별로 묶음 (분류 순서는 목록에 처음 나온 순). category를 주면 그 분류만, query는 분류·제목에서 찾음. 빈 묶음은 뺌 */
-export function groupClauses(list: Clause[], { category = '', query = '' }: { category?: string; query?: string } = {}): [string, Clause[]][] {
+/** 분류별로 묶음 (분류 순서는 목록에 처음 나온 순). category를 주면 그 분류만, query는 분류·제목에서 찾음. 빈 묶음은 뺌. 조항·템플릿 모두 쓸 수 있음 */
+export function groupClauses<T extends { category: string; title: string }>(
+  list: T[],
+  { category = '', query = '' }: { category?: string; query?: string } = {},
+): [string, T[]][] {
   const q = query.trim()
-  const groups = new Map<string, Clause[]>()
+  const groups = new Map<string, T[]>()
   for (const c of list) {
     if (category && c.category !== category) continue
     if (q && !`${c.category} ${c.title}`.includes(q)) continue

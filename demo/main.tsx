@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { LegalEditor, clauses, templates } from '../src'
+import { LegalEditor, clauses, groupClauses, templates } from '../src'
 
 const nda = `
 <h1>비밀유지계약서</h1>
@@ -47,10 +47,15 @@ function Demo() {
       <label style={{ display: 'block', padding: '12px 16px 0', background: '#eef0f3', font: '14px system-ui, sans-serif' }}>
         템플릿{' '}
         <select value={id} onChange={(e) => setId(e.target.value)}>
-          {options.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.title}
-            </option>
+          <option value="nda">{options[0].title}</option>
+          {groupClauses(templates).map(([category, items]) => (
+            <optgroup key={category} label={category}>
+              {items.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </label>
