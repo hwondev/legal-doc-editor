@@ -1,5 +1,7 @@
 # legal-doc-editor
 
+[![npm](https://img.shields.io/npm/v/legal-doc-editor)](https://www.npmjs.com/package/legal-doc-editor) [![license](https://img.shields.io/npm/l/legal-doc-editor)](./LICENSE)
+
 계약서·합의서 같은 **법률문서를 만드는 React 에디터**입니다.
 
 - **조·항·호 자동 번호**: 조를 넣거나 옮기면 제1조, ①, 1. 번호가 알아서 다시 매겨져요
