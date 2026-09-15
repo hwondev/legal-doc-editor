@@ -10,19 +10,36 @@ import type { Values } from './variable'
  */
 export function calcStampFee(amount: number, opts: { electronic?: boolean } = {}): number {
   if (!(amount > 0)) return 0
-  // 제2조 ①: [요율(만분율), 더할 금액]. 부동소수점 오차가 없게 1만분의 1원 단위 정수로 계산
-  const [rate, add] = amount < 1e7 ? [50, 0] : amount < 1e8 ? [45, 5_000] : amount < 1e9 ? [40, 55_000] : [35, 555_000]
-  const raw = amount * rate + add * 1e4
+  const raw = stampRaw(amount)
   // 제2조 ②: 1천원 미만이면 1천원, 1천원 이상이면 100원 미만 버림
   if (!opts.electronic) return raw < 1000e4 ? 1000 : Math.floor(raw / 1e6) * 100
   return raw < 1000e4 ? 900 : Math.floor((raw * 9) / 1e7) * 100
 }
 
+// 제2조 ① 금액을 1만분의 1원 단위 정수로 (부동소수점 오차 방지). [요율(만분율), 더할 금액]
+function stampRaw(amount: number) {
+  const [rate, add] = amount < 1e7 ? [50, 0] : amount < 1e8 ? [45, 5_000] : amount < 1e9 ? [40, 55_000] : [35, 555_000]
+  return amount * rate + add * 1e4
+}
+
+/**
+ * 지급명령 신청서 인지대. 「민사소송 등 인지법」 제7조제2항(제2조 금액의 10분의 1)·제4항(제2조제2항 준용)
+ * 예: 청구금액 3,000,000원 → (3,000,000 × 0.005) × 0.1 = 1,500원
+ * 출처: https://easylaw.go.kr/CSP/CnpClsMain.laf?popMenu=ov&csmSeq=568&ccfNo=3&cciNo=3&cnpClsNo=3 (확인 2026-09-15)
+ * ponytail: 종이 신청 기준. 전자신청 10분의 9 감액과 끝자리 처리 순서는 공식 안내로 확인하지 못해 아직 넣지 않음
+ */
+export function calcPaymentOrderStampFee(amount: number): number {
+  if (!(amount > 0)) return 0
+  const raw = stampRaw(amount) // × 1/10 한 값이 1천원(1000e4) 미만 ⇔ raw < 1000e5
+  return raw < 1000e5 ? 1000 : Math.floor(raw / 1e7) * 100
+}
+
 /**
  * 송달료 회분. 「송달료규칙의 시행에 따른 업무처리요령」(재판예규 재일 87-4) 별표 1
  * 출처: https://www.easylaw.go.kr/CSP/CnpClsMain.laf?csmSeq=568&ccfNo=2&cciNo=4&cnpClsNo=3 (확인 2026-09-15)
+ * 독촉(지급명령) 6회분: 생활법령정보 지급명령 신청서 작성 (위 calcPaymentOrderStampFee 출처와 같음)
  */
-export const SERVICE_ROUNDS = { 소액: 10, 단독: 15, 합의: 15, 항소: 12, 상고: 8, 조정: 5 } as const
+export const SERVICE_ROUNDS = { 소액: 10, 단독: 15, 합의: 15, 항소: 12, 상고: 8, 조정: 5, 독촉: 6 } as const
 export type Procedure = keyof typeof SERVICE_ROUNDS
 
 /**
@@ -51,20 +68,34 @@ const won = (n: number) => `${n.toLocaleString('ko-KR')}원`
 const digits = (s = '') => Number(s.replace(/[^\d]/g, '')) || 0
 
 /**
- * 입력값에 `소가`(또는 `소송목적의 값`)가 있으면 이름이 `인지액`·`송달료`로 시작하는 변수를 계산값으로 채움.
- * 직접 입력한 값은 덮어쓰지 않음. 제1심 소장 기준(소가 3천만원 이하 소액 10회분, 넘으면 15회분)
+ * 비어 있는 비용 변수를 계산값으로 채움. 직접 입력한 값은 덮어쓰지 않음.
+ * - 소장: `소가`(또는 `소송목적의 값`) → 이름이 `인지액`·`송달료`로 시작하는 변수 (소가 3천만원 이하 소액 10회분, 넘으면 15회분)
+ * - 지급명령: `청구금액` → `독촉절차 인지대`(소장의 10분의 1)·`독촉절차 송달료`(6회분)·`독촉절차비용`(두 금액 합계)
  */
 export function withCourtFees(names: string[], values: Values, opts: CourtFeeOptions = {}): Values {
-  const amountName = names.find((n) => /^(소가|소송목적의\s*값)/.test(n))
-  const amount = amountName ? digits(values[amountName]) : 0
-  if (!amount) return values
-  const stamp = won(calcStampFee(amount, opts))
-  const service = won(calcServiceFee({ parties: opts.parties ?? 2, procedure: amount <= SMALL_CLAIM_LIMIT ? '소액' : '단독', unitFee: opts.unitFee }))
+  const amountOf = (re: RegExp) => digits(values[names.find((n) => re.test(n)) ?? ''])
   const out = { ...values }
-  for (const n of names) {
-    if (values[n]?.trim()) continue
-    if (/^인지(액|대)/.test(n)) out[n] = stamp
-    else if (/^송달료/.test(n)) out[n] = service
+  const fill = (re: RegExp, value: number) => {
+    for (const n of names) if (re.test(n) && !values[n]?.trim()) out[n] = won(value)
   }
-  return out
+  const parties = opts.parties ?? 2
+
+  const amount = amountOf(/^(소가|소송목적의\s*값)/)
+  if (amount) {
+    fill(/^인지(액|대)/, calcStampFee(amount, opts))
+    fill(/^송달료/, calcServiceFee({ parties, procedure: amount <= SMALL_CLAIM_LIMIT ? '소액' : '단독', unitFee: opts.unitFee }))
+  }
+
+  const claim = amountOf(/^청구금액/)
+  if (claim && names.some((n) => /^독촉절차/.test(n))) {
+    const STAMP = /^독촉절차\s*인지(액|대)/
+    const SERVICE = /^독촉절차\s*송달료/
+    const stamp = calcPaymentOrderStampFee(claim)
+    const service = calcServiceFee({ parties, procedure: '독촉', unitFee: opts.unitFee })
+    fill(STAMP, stamp)
+    fill(SERVICE, service)
+    // 합계는 직접 입력한 인지대·송달료가 있으면 그 값으로 더함
+    fill(/^독촉절차\s*비용/, (amountOf(STAMP) || stamp) + (amountOf(SERVICE) || service))
+  }
+  return amount || claim ? out : values
 }
