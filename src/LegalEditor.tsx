@@ -7,6 +7,7 @@ import { Numbering } from './numbering'
 import { EvidenceRef } from './evidence'
 import { CitationLink, formatCaseCitation, type CaseResult } from './citation'
 import { groupClauses, type Clause } from './clauses'
+import type { Template } from './templates'
 import { withCourtFees, type CourtFeeOptions } from './fees'
 import { formatAmount, parseAmount } from './amount'
 import { fromFile, toDocx, toHwp, toHwpx } from './io'
@@ -26,6 +27,8 @@ export interface LegalEditorProps {
   searchCases?: (query: string) => Promise<CaseResult[]>
   /** 조항 목록. 넘기면 오른쪽에 조항 라이브러리가 생기고, 누르면 커서 위치에 조항이 들어감 (기본 제공 목록: `clauses`) */
   clauses?: Clause[]
+  /** 템플릿 목록. 넘기면 툴바에 템플릿 선택이 생기고(분류별로 묶음), 고르면 문서를 그 템플릿으로 바꿈 (기본 제공 목록: `templates`) */
+  templates?: Template[]
   /** .hwp 저장에 쓰는 @rhwp/core WASM 주소. 번들러가 WASM 경로를 못 찾을 때만 지정 (예: '/rhwp_bg.wasm') */
   hwpWasmUrl?: string
 }
@@ -54,7 +57,7 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 
-export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases, clauses, hwpWasmUrl }: LegalEditorProps) {
+export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases, clauses, templates, hwpWasmUrl }: LegalEditorProps) {
   const [values, setValues] = useState(initial)
   const [names, setNames] = useState<string[]>([])
   const [caseQuery, setCaseQuery] = useState('')
@@ -105,6 +108,14 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
     } catch (err) {
       window.alert(`파일을 열 수 없어요: ${(err as Error).message}`)
     }
+  }
+
+  // 템플릿으로 시작: 작성한 내용이 있으면 먼저 물어봄. 바꾼 뒤에도 되돌리기(Ctrl·⌘+Z)로 돌아올 수 있음. 입력값은 그대로 둠(같은 이름 변수에 이어서 쓰임)
+  const startTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const template = templates?.find((t) => t.id === e.target.value)
+    if (!template || !editor) return
+    if (!editor.isEmpty && !window.confirm(`지금 문서를 「${template.title}」 템플릿으로 바꿀까요? 되돌리기(Ctrl·⌘+Z)로 돌아올 수 있어요.`)) return
+    editor.chain().focus().setContent(toChips(template.html), { emitUpdate: true }).run()
   }
 
   const save = async (to: typeof toDocx, ext: string) => {
@@ -180,6 +191,23 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             <button type="button" title="선택한 금액 → 금 37,200,000원" onClick={() => amount('소장')}>금액</button>
             <button type="button" title="선택한 금액 → 금 삼천칠백이십만 원정(₩37,200,000)" onClick={() => amount('계약서')}>금액(한글)</button>
             <span className="le-spacer" />
+            {templates && (
+              // value를 늘 비워 둬서 같은 템플릿을 다시 골라도 동작함
+              <select className="le-btn" aria-label="템플릿으로 시작" value="" onChange={startTemplate}>
+                <option value="" disabled>
+                  템플릿…
+                </option>
+                {groupClauses(templates).map(([category, items]) => (
+                  <optgroup key={category} label={category}>
+                    {items.map((t) => (
+                      <option key={t.id} value={t.id} title={t.description}>
+                        {t.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            )}
             <label className="le-btn">
               열기
               <input type="file" accept=".docx,.doc,.hwp,.hwpx" hidden onChange={openFile} />
