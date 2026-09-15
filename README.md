@@ -91,6 +91,18 @@ export default function Page() {
 - 그래도 WASM을 못 찾으면 `node_modules/@rhwp/core/rhwp_bg.wasm`을 정적 폴더에 복사하고 주소를 넘겨요: `<LegalEditor hwpWasmUrl="/rhwp_bg.wasm" />`
 - 만든 파일은 다시 읽었을 때 제목·조항·번호·표·글자가 그대로인지 검사하지만, **한글 프로그램에서 열리는지는 직접 확인**해 주세요.
 
+### 템플릿으로 시작
+
+`templates`를 넘기면 툴바에 **템플릿…** 선택이 생겨요. 원고·신청인 / 피고 / 기타로 묶여 있고, 고르면 문서가 그 템플릿으로 바뀌어요. 작성 중인 내용이 있으면 먼저 물어보고, 바꾼 뒤에도 되돌리기(Ctrl·⌘+Z)로 돌아올 수 있어요. 입력값은 그대로 두어서 같은 이름의 빈칸(`{{원고 이름}}` 등)에 이어서 쓰여요.
+
+```tsx
+import { LegalEditor, templates } from 'legal-doc-editor'
+
+<LegalEditor templates={templates} autoFees />
+// 내 템플릿 더하기
+<LegalEditor templates={[...templates, { id: 'my-notice', title: '통지서', category: '기타', description: '…', html: '<h1>통 지 서</h1><p>…</p>' }]} />
+```
+
 ### 조항 라이브러리
 
 `clauses`를 넘기면 오른쪽 패널에 조항 목록이 생겨요. 분류 칩(전체·일반·기간·의무·책임·종료·분쟁)으로 좁히거나 검색칸에서 제목·분류로 찾고, 누르면 커서 위치에 조항이 들어가요. `전체`에서는 분류별로 묶어 보여줘요. 조항 안의 `{{변수}}`는 입력칸에 바로 나타나고 뒤쪽 조 번호는 알아서 밀려요.
@@ -151,7 +163,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 
 | 이름 | 설명 |
 | --- | --- |
-| `<LegalEditor content values onChange onValuesChange editable autoFees searchCases clauses hwpWasmUrl />` | 에디터 컴포넌트 |
+| `<LegalEditor content values onChange onValuesChange editable autoFees searchCases clauses templates hwpWasmUrl />` | 에디터 컴포넌트 |
 | `clauses` | 기본 조항 목록 `{ id, title, category, html }[]` |
 | `groupClauses(clauses, { category, query })` | 조항·템플릿을 분류별로 묶음 `[분류, 항목[]][]` (분류 선택·검색 적용) — `groupClauses(templates)` |
 | `formatCaseCitation(result)` | 판례 검색 결과 → `대법원 2016. 4. 28. 선고 2015다12345 판결` |

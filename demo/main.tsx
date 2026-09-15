@@ -1,6 +1,5 @@
-import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { LegalEditor, clauses, groupClauses, templates } from '../src'
+import { LegalEditor, clauses, templates } from '../src'
 
 const nda = `
 <h1>비밀유지계약서</h1>
@@ -25,9 +24,8 @@ const nda = `
 <p>을: {{을}} (인)</p>
 <p>&nbsp;</p>
 <p>※ 인용 표기 예시 — 민법 제750조, 대법원 2016. 4. 28. 선고 2015다12345 판결 (밑줄에 Ctrl·⌘+클릭하면 국가법령정보센터가 열려요)</p>
+<p>※ 소장·답변서·준비서면 등은 툴바의 「템플릿…」에서 골라 시작해 보세요.</p>
 `
-
-const options = [{ id: 'nda', title: '비밀유지계약서 (예시)', html: nda }, ...templates]
 
 // 데모용 가짜 검색 결과 — 실제 판례가 아님(2099년 사건번호). 실제 연결은 examples/law-go-kr-proxy 참고
 const demoSearchCases = async (q: string) => {
@@ -39,30 +37,6 @@ const demoSearchCases = async (q: string) => {
   ]
 }
 
-function Demo() {
-  const [id, setId] = useState(options[0].id)
-  const current = options.find((o) => o.id === id)!
-  return (
-    <>
-      <label style={{ display: 'block', padding: '12px 16px 0', background: '#eef0f3', font: '14px system-ui, sans-serif' }}>
-        템플릿{' '}
-        <select value={id} onChange={(e) => setId(e.target.value)}>
-          <option value="nda">{options[0].title}</option>
-          {groupClauses(templates).map(([category, items]) => (
-            <optgroup key={category} label={category}>
-              {items.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.title}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </label>
-      {/* 템플릿을 바꾸면 에디터를 새로 만듦 (content는 처음 한 번만 읽음) */}
-      <LegalEditor key={id} content={current.html} values={id === 'nda' ? { 갑: '주식회사 가나다' } : {}} autoFees searchCases={demoSearchCases} clauses={clauses} />
-    </>
-  )
-}
-
-createRoot(document.getElementById('root')!).render(<Demo />)
+createRoot(document.getElementById('root')!).render(
+  <LegalEditor content={nda} values={{ 갑: '주식회사 가나다' }} autoFees searchCases={demoSearchCases} clauses={clauses} templates={templates} />,
+)
