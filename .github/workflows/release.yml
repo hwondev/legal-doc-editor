@@ -1,0 +1,30 @@
+name: Release
+
+# vX.Y.Z 태그를 push하면 npm 배포 + GitHub Release
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # GitHub Release 만들기
+  id-token: write # npm 신뢰 게시(OIDC): 토큰·OTP 없이 배포, provenance 자동 첨부
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - name: 태그와 package.json 버전이 같은지 확인
+        run: test "v$(node -p "require('./package.json').version")" = "$GITHUB_REF_NAME"
+      - run: npm publish # prepublishOnly가 check·build 실행
+      - name: CHANGELOG의 해당 버전 내용으로 GitHub Release 만들기
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          awk -v v="${GITHUB_REF_NAME#v}" '$0 ~ "^## \\[" v "\\]" {on=1; next} /^## \[/ {on=0} on' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --notes-file notes.md
