@@ -1,0 +1,80 @@
+/* 항: ①~⑳, 넘어가면 숫자 */
+@counter-style le-circled {
+  system: fixed;
+  symbols: '\2460' '\2461' '\2462' '\2463' '\2464' '\2465' '\2466' '\2467' '\2468' '\2469'
+    '\246A' '\246B' '\246C' '\246D' '\246E' '\246F' '\2470' '\2471' '\2472' '\2473';
+  suffix: ' ';
+}
+
+/* 문서 본문 — 에디터 안에서도, fillTemplate 결과를 렌더할 때도 같은 클래스 */
+.legal-doc {
+  counter-reset: le-article le-n1 le-n2 le-n3 le-n4;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 56px 64px;
+  background: #fff;
+  color: #111;
+  font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif;
+  font-size: 15px;
+  line-height: 1.85;
+  outline: none;
+}
+.legal-doc h1 { text-align: center; font-size: 1.6em; letter-spacing: 0.25em; margin: 0 0 1.6em; }
+.legal-doc h2 { counter-increment: le-article; font-size: 1em; margin: 1.6em 0 0.3em; }
+.legal-doc h2::before { content: '제' counter(le-article) '조 '; }
+.legal-doc p { margin: 0 0 0.4em; }
+.legal-doc ol { list-style: le-circled; margin: 0 0 0.4em; padding-left: 1.8em; }
+.legal-doc ol ol { list-style: decimal; } /* 호 */
+.legal-doc li p { margin: 0; }
+.legal-doc h3 { text-align: center; font-size: 1.05em; letter-spacing: 0.3em; margin: 1.8em 0 0.8em; } /* 소제목: 청구취지 등 */
+
+/* 번호 문단(소장식): 1. → 가. → (1) → (가). 제목·조·소제목에서 1부터 다시. io.ts flatten()과 같은 규칙 */
+/* 형제 요소의 counter-reset은 새 카운터 범위를 만들어 소제목 뒤로 번호가 이어짐 → 루트 카운터 값을 counter-set으로 되돌림 */
+.legal-doc > h1, .legal-doc > h2, .legal-doc > h3 { counter-set: le-n1 le-n2 le-n3 le-n4; }
+.legal-doc > p[data-num] { padding-left: calc(var(--le-num-indent, 0em) + 2em); text-indent: -2em; }
+.legal-doc > p[data-num]::before { display: inline-block; min-width: 2em; text-indent: 0; }
+.legal-doc > p[data-num="1"] { counter-increment: le-n1; counter-set: le-n2 le-n3 le-n4; }
+.legal-doc > p[data-num="2"] { counter-increment: le-n2; counter-set: le-n3 le-n4; --le-num-indent: 1.2em; }
+.legal-doc > p[data-num="3"] { counter-increment: le-n3; counter-set: le-n4; --le-num-indent: 2.4em; }
+.legal-doc > p[data-num="4"] { counter-increment: le-n4; --le-num-indent: 3.6em; }
+.legal-doc > p[data-num="1"]::before { content: counter(le-n1) '.'; }
+.legal-doc > p[data-num="2"]::before { content: counter(le-n2, hangul) '.'; }
+.legal-doc > p[data-num="3"]::before { content: '(' counter(le-n3) ')'; }
+.legal-doc > p[data-num="4"]::before { content: '(' counter(le-n4, hangul) ')'; }
+.legal-doc .tableWrapper { overflow-x: auto; }
+.legal-doc table { width: 100%; border-collapse: collapse; margin: 0.6em 0; font-size: 0.93em; }
+.legal-doc td, .legal-doc th { border: 1px solid #555; padding: 3px 6px; vertical-align: top; }
+.legal-doc td p, .legal-doc th p { margin: 0; }
+.legal-doc .selectedCell { background: #e5edff; }
+
+/* 에디터 UI */
+.le-root { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; padding: 16px; background: #eef0f3; font: 14px/1.5 system-ui, sans-serif; }
+.le-main { min-width: 0; }
+.le-toolbar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 4px; max-width: 760px; margin: 0 auto 8px; padding: 6px; background: #fff; border-radius: 8px; box-shadow: 0 1px 2px #0001; }
+.le-toolbar button, .le-toolbar .le-btn { padding: 4px 10px; border: 1px solid #d0d4da; border-radius: 6px; background: #fff; cursor: pointer; font: inherit; }
+.le-toolbar button:hover { background: #f3f5f8; }
+.le-spacer { flex: 1; }
+.le-main .legal-doc { box-shadow: 0 1px 4px #0002; min-height: 900px; }
+
+.le-var { padding: 0 3px; border-radius: 3px; background: #e5edff; color: #1d3f94; }
+.le-var--empty { background: #fff1c2; color: #8a5a00; }
+
+.le-panel { align-self: start; position: sticky; top: 16px; padding: 14px; background: #fff; border-radius: 8px; box-shadow: 0 1px 2px #0001; }
+.le-panel h3 { margin: 0 0 10px; font-size: 14px; }
+.le-panel label { display: grid; gap: 3px; margin-bottom: 10px; color: #444; font-size: 13px; }
+.le-panel input { padding: 6px 8px; border: 1px solid #d0d4da; border-radius: 6px; font: inherit; }
+.le-hint { margin: 0; color: #777; font-size: 13px; }
+
+@media (max-width: 800px) {
+  .le-root { grid-template-columns: 1fr; }
+  .legal-doc { padding: 32px 24px; }
+}
+
+@media print {
+  .le-printing body * { visibility: hidden; }
+  .le-printing .legal-doc, .le-printing .legal-doc * { visibility: visible; }
+  .le-printing .legal-doc { position: absolute; top: 0; left: 0; width: 100%; max-width: none; padding: 0; box-shadow: none; }
+  .le-printing .le-var { padding: 0; background: none; color: inherit; }
+  /* 빈 값은 손으로 쓰는 밑줄 칸 */
+  .le-printing .le-var--empty { color: transparent; border-bottom: 1px solid #000; }
+}

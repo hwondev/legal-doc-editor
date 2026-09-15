@@ -1,0 +1,58 @@
+{
+  "name": "legal-doc-editor",
+  "version": "0.1.0",
+  "description": "법률문서(계약서·소장·고소장) 생성용 React 에디터 — 조항·번호 자동 매김, {{변수}} 채우기, 한글(hwp·hwpx)·Word(docx) 열기·저장",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hwondev/legal-doc-editor.git"
+  },
+  "homepage": "https://github.com/hwondev/legal-doc-editor#readme",
+  "bugs": "https://github.com/hwondev/legal-doc-editor/issues",
+  "keywords": ["react", "editor", "legal", "contract", "korean", "hwp", "hwpx", "docx", "tiptap", "법률문서", "계약서", "소장"],
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./style.css": "./dist/style.css"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsc -p tsconfig.build.json",
+    "check": "node scripts/check.ts",
+    "prepublishOnly": "npm run check && npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "dependencies": {
+    "@tiptap/core": "^3.31.3",
+    "@tiptap/extension-table": "^3.31.3",
+    "@tiptap/pm": "^3.31.3",
+    "@tiptap/react": "^3.31.3",
+    "@tiptap/starter-kit": "^3.31.3",
+    "docx": "^9.7.1",
+    "hwp-convert": "^1.13.0",
+    "mammoth": "^1.12.3"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0"
+  }
+}
