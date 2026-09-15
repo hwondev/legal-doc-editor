@@ -63,6 +63,27 @@ assert.match(html, /<h3><b>입 증 방 법<\/b><\/h3>\n<p>1\. 새 섹션<\/p>/)
 assert.match(html, /<p>② 이어진 항<\/p>\n<p style="margin-left:2em">1\. 호<\/p>\n<p>③ 다음 항<\/p>/)
 assert.match(html, /<table><tr><td colspan="2">합계<br>2줄<\/td><\/tr><tr><td>A<\/td><td>B<\/td><\/tr><\/table>/)
 
+// 호증 문단: 당사자별로 문서 전체에서 이어 세고(소제목에서 1로 돌아가지 않음), 번호 문단 표시 뒤에 붙음
+const ev = (party: string, text: string, level: number | null = null) => ({ type: 'paragraph', attrs: { num: level, evidence: party }, content: [t(text)] })
+const evHtml = toPlainHtml(
+  {
+    type: 'doc',
+    content: [
+      ev('갑', '차용증', 1),
+      p(t('참고')),
+      ev('갑', '계좌이체 내역', 1),
+      ev('을', '영수증'),
+      { type: 'heading', attrs: { level: 3 }, content: [t('첨 부 서 류')] },
+      ev('갑', '추가 증거', 1),
+    ],
+  },
+  {},
+)
+assert.equal(
+  evHtml,
+  '<p>1. 갑 제1호증 차용증</p>\n<p>참고</p>\n<p>2. 갑 제2호증 계좌이체 내역</p>\n<p>을 제1호증 영수증</p>\n<h3><b>첨 부 서 류</b></h3>\n<p>1. 갑 제3호증 추가 증거</p>',
+)
+
 const hwpx = new Uint8Array(await (await toHwpx(doc, {})).arrayBuffer())
 assert.deepEqual([...hwpx.slice(0, 2)], [0x50, 0x4b]) // zip
 

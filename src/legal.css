@@ -8,7 +8,7 @@
 
 /* 문서 본문 — 에디터 안에서도, fillTemplate 결과를 렌더할 때도 같은 클래스 */
 .legal-doc {
-  counter-reset: le-article le-n1 le-n2 le-n3 le-n4;
+  counter-reset: le-article le-n1 le-n2 le-n3 le-n4 le-ev1 le-ev2 le-ev3;
   max-width: 760px;
   margin: 0 auto;
   padding: 56px 64px;
@@ -32,15 +32,21 @@
 /* 형제 요소의 counter-reset은 새 카운터 범위를 만들어 소제목 뒤로 번호가 이어짐 → 루트 카운터 값을 counter-set으로 되돌림 */
 .legal-doc > h1, .legal-doc > h2, .legal-doc > h3 { counter-set: le-n1 le-n2 le-n3 le-n4; }
 .legal-doc > p[data-num] { padding-left: calc(var(--le-num-indent, 0em) + 2em); text-indent: -2em; }
-.legal-doc > p[data-num]::before { display: inline-block; min-width: 2em; text-indent: 0; }
-.legal-doc > p[data-num="1"] { counter-increment: le-n1; counter-set: le-n2 le-n3 le-n4; }
-.legal-doc > p[data-num="2"] { counter-increment: le-n2; counter-set: le-n3 le-n4; --le-num-indent: 1.2em; }
-.legal-doc > p[data-num="3"] { counter-increment: le-n3; counter-set: le-n4; --le-num-indent: 2.4em; }
-.legal-doc > p[data-num="4"] { counter-increment: le-n4; --le-num-indent: 3.6em; }
-.legal-doc > p[data-num="1"]::before { content: counter(le-n1) '.'; }
-.legal-doc > p[data-num="2"]::before { content: counter(le-n2, hangul) '.'; }
-.legal-doc > p[data-num="3"]::before { content: '(' counter(le-n3) ')'; }
-.legal-doc > p[data-num="4"]::before { content: '(' counter(le-n4, hangul) ')'; }
+.legal-doc > p[data-num]::before { content: var(--le-num); display: inline-block; min-width: 2em; text-indent: 0; }
+.legal-doc > p[data-num="1"] { counter-increment: le-n1; counter-set: le-n2 le-n3 le-n4; --le-num: counter(le-n1) '.'; }
+.legal-doc > p[data-num="2"] { counter-increment: le-n2; counter-set: le-n3 le-n4; --le-num-indent: 1.2em; --le-num: counter(le-n2, hangul) '.'; }
+.legal-doc > p[data-num="3"] { counter-increment: le-n3; counter-set: le-n4; --le-num-indent: 2.4em; --le-num: '(' counter(le-n3) ')'; }
+.legal-doc > p[data-num="4"] { counter-increment: le-n4; --le-num-indent: 3.6em; --le-num: '(' counter(le-n4, hangul) ')'; }
+/* 호증 문단(입증방법): 갑 제1호증 → 갑 제2호증. 당사자별로 문서 전체에서 이어 셈. io.ts flatten()과 같은 규칙 */
+/* 번호 문단과 함께 쓸 수 있게 증가는 ::before에서(p의 counter-increment와 안 겹침), 글자는 --le-num 뒤에 이어 붙임 */
+.legal-doc > p[data-evidence="갑"] { --le-ev: '갑 제' counter(le-ev1) '호증\a0'; }
+.legal-doc > p[data-evidence="을"] { --le-ev: '을 제' counter(le-ev2) '호증\a0'; }
+.legal-doc > p[data-evidence="병"] { --le-ev: '병 제' counter(le-ev3) '호증\a0'; }
+.legal-doc > p[data-evidence="갑"]::before { counter-increment: le-ev1; }
+.legal-doc > p[data-evidence="을"]::before { counter-increment: le-ev2; }
+.legal-doc > p[data-evidence="병"]::before { counter-increment: le-ev3; }
+.legal-doc > p[data-evidence]::before { content: var(--le-ev); }
+.legal-doc > p[data-num][data-evidence]::before { content: var(--le-num) '\a0' var(--le-ev); }
 /* 판례·법령 인용 — 본문 데이터는 그대로 두고 화면에서만 밑줄·링크를 덧입힘 (citation.ts) */
 .legal-doc .le-cite { color: inherit; text-decoration: underline dotted #3a56b4; text-underline-offset: 3px; cursor: pointer; }
 .legal-doc .le-cite:hover { background: #eef2ff; }

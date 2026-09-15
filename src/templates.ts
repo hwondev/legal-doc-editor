@@ -47,8 +47,8 @@ export const templates: Template[] = [
 <p data-num="1">결론</p>
 <p>따라서 원고는 피고에게 위 대여금과 이에 대하여 변제기 다음 날부터 이 사건 소장 부본 송달일까지는 민법이 정한 연 5%의, 그 다음 날부터 다 갚는 날까지는 소송촉진 등에 관한 특례법이 정한 연 12%의 각 비율로 계산한 지연손해금의 지급을 구합니다.</p>
 <h3>입 증 방 법</h3>
-<p data-num="1">갑 제1호증 차용증</p>
-<p data-num="1">갑 제2호증 계좌이체 내역</p>
+<p data-num="1" data-evidence="갑">차용증</p>
+<p data-num="1" data-evidence="갑">계좌이체 내역</p>
 <h3>첨 부 서 류</h3>
 <p data-num="1">위 입증방법 각 1통</p>
 <p data-num="1">소장 부본 1통</p>

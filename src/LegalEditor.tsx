@@ -131,6 +131,10 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
 
   const cmd = () => editor!.chain().focus()
   const toggleNum = (level: number) => cmd().setNumbering(editor!.getAttributes('paragraph').num === level ? null : level).run()
+  const toggleEvidence = () => {
+    const party = editor!.getAttributes('paragraph').evidence
+    cmd().setEvidence(party === '갑' ? '을' : party ? null : '갑').run()
+  }
   // 선택한 글에서 숫자만 뽑아 금액 서식으로 바꿈 ("37200000", "3,720만" → 숫자 부분)
   const amount = (style: '소장' | '계약서') => {
     const { from, to } = editor!.state.selection
@@ -151,6 +155,9 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
                 {label}
               </button>
             ))}
+            <button type="button" title="입증방법 갑 제N호증 자동 번호 — 누를 때마다 갑 → 을 → 해제, Enter로 다음 호증" onClick={toggleEvidence}>
+              호증
+            </button>
             <button type="button" onClick={() => cmd().toggleOrderedList().run()}>항</button>
             <button type="button" onClick={() => cmd().sinkListItem('listItem').run()}>호 →</button>
             <button type="button" onClick={() => cmd().liftListItem('listItem').run()}>← 내어쓰기</button>
