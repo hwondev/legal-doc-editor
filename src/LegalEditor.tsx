@@ -79,8 +79,8 @@ function Library<T extends { id: string; title: string; category: string }>({
   const [category, setCategory] = useState('') // '' = 전체
   const groups = groupClauses(items, { category, query })
   return (
-    <section className="le-clauses">
-      <h3>{title}</h3>
+    <details className="le-clauses" open>
+      <summary>{title}</summary>
       <input value={query} placeholder={placeholder} aria-label={`${title} 찾기`} onChange={(e) => setQuery(e.target.value)} />
       <div className="le-clause-cats" role="group" aria-label={`${title} 분류`}>
         {['', ...new Set(items.map((item) => item.category))].map((cat) => (
@@ -104,7 +104,7 @@ function Library<T extends { id: string; title: string; category: string }>({
         ))}
       </ul>
       {groups.length === 0 && <p className="le-hint">{empty}</p>}
-    </section>
+    </details>
   )
 }
 
@@ -253,14 +253,17 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
         <EditorContent editor={editor} />
       </div>
       <aside className="le-panel">
-        <h3>입력값</h3>
-        {names.length === 0 && <p className="le-hint">본문에 {'{{당사자}}'}처럼 입력하면 변수가 생겨요.</p>}
-        {names.map((n) => (
-          <label key={n}>
-            {n}
-            <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
-          </label>
-        ))}
+        {/* 섹션마다 접고 펼 수 있음. open은 처음 값만 주고 이후엔 사용자가 바꾼 상태를 React가 건드리지 않음 */}
+        <details open>
+          <summary>입력값</summary>
+          {names.length === 0 && <p className="le-hint">본문에 {'{{당사자}}'}처럼 입력하면 변수가 생겨요.</p>}
+          {names.map((n) => (
+            <label key={n}>
+              {n}
+              <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
+            </label>
+          ))}
+        </details>
         {templates && (
           <Library
             title="템플릿"
@@ -285,8 +288,8 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
           />
         )}
         {searchCases && (
-          <section className="le-cases">
-            <h3>판례 검색</h3>
+          <details className="le-cases" open>
+            <summary>판례 검색</summary>
             {/* 에디터가 다른 앱의 form 안에 들어갈 수 있어 form 대신 Enter로 검색 */}
             <div className="le-cases-bar">
               <input
@@ -316,7 +319,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
                 </li>
               ))}
             </ul>
-          </section>
+          </details>
         )}
       </aside>
     </div>
