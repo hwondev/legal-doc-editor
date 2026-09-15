@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-15
+
 ### Added
 
 - `.hwp`(HWP 5.0) 바로 저장 — `toHwp`와 툴바 **한글(.hwp) 저장** 버튼, `hwpWasmUrl` 옵션. `.hwpx`를 [@rhwp/core](https://github.com/edwardkim/rhwp)(WASM)로 변환하며, WASM은 처음 저장할 때만 불러옴
@@ -54,7 +56,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.1.0...v0.2.0
