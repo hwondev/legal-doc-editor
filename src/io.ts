@@ -27,9 +27,14 @@ export const evidenceText = (party: string, n: number) => `${party} 제${n}호�
 // 항·호·표 안 문단은 호증 번호를 세지 않음 (flatten의 walk가 이 노드들 안 문단을 번호 문단으로 보지 않는 것과 같은 범위)
 export const EVIDENCE_SKIP = ['orderedList', 'bulletList', 'table']
 
-/** 에디터 JSON → 호증 문단 id별 현재 표시 { id: '갑 제2호증' }. 본문 호증 참조 글자를 만들 때 씀 (legal.css 카운터와 같은 규칙) */
-export function evidenceLabels(doc: JSONContent): Record<string, string> {
-  const labels: Record<string, string> = {}
+export type RefForm = 'full' | 'short' | 'number'
+/** 본문 참조 모양별 글자: full "갑 제2호증" / short "제2호증"(범위·나열의 뒤쪽) / number "2"("갑 제1, 2호증"의 번호) */
+export const refText = (party: string, n: number, form: RefForm = 'full') =>
+  form === 'short' ? `제${n}호증` : form === 'number' ? String(n) : evidenceText(party, n)
+
+/** 에디터 JSON → 호증 문단 id별 당사자와 현재 번호 { id: { party: '갑', n: 2 } } (legal.css 카운터와 같은 규칙) */
+export function evidenceNumbers(doc: JSONContent): Record<string, { party: string; n: number }> {
+  const numbers: Record<string, { party: string; n: number }> = {}
   const counts: Record<string, number> = {}
   const walk = (nodes: JSONContent[] = []) => {
     for (const n of nodes) {
@@ -41,24 +46,31 @@ export function evidenceLabels(doc: JSONContent): Record<string, string> {
       const party: string | undefined = n.attrs?.evidence
       if (!party) continue
       counts[party] = (counts[party] ?? 0) + 1
-      if (n.attrs?.evidenceId) labels[n.attrs.evidenceId] = evidenceText(party, counts[party])
+      if (n.attrs?.evidenceId) numbers[n.attrs.evidenceId] = { party, n: counts[party] }
     }
   }
   walk(doc.content)
-  return labels
+  return numbers
 }
+
+/** 에디터 JSON → 호증 문단 id별 현재 표시 { id: '갑 제2호증' } */
+export const evidenceLabels = (doc: JSONContent): Record<string, string> =>
+  Object.fromEntries(Object.entries(evidenceNumbers(doc)).map(([id, e]) => [id, evidenceText(e.party, e.n)]))
 
 /** 에디터 JSON → 번호(제N조·①·1.)가 텍스트로 박힌 블록 목록. docx/hwpx/HTML 내보내기 공용 */
 function flatten(doc: JSONContent, values: Values): Block[] {
   const out: Block[] = []
   let article = 0
-  const refLabels = evidenceLabels(doc) // 본문 호증 참조 → 가리키는 증거의 현재 번호 (증거가 없어졌으면 참조에 남은 마지막 글자)
+  const refNumbers = evidenceNumbers(doc) // 본문 호증 참조 → 가리키는 증거의 현재 번호 (증거가 없어졌으면 참조에 남은 마지막 글자)
 
   const runs = (nodes: JSONContent[] = []): Run[] =>
     nodes.map((n) => {
       if (n.type === 'hardBreak') return { text: '', br: true }
       if (n.type === 'variable') return { text: values[n.attrs!.name] || `[${n.attrs!.name}]` }
-      if (n.type === 'evidenceRef') return { text: refLabels[n.attrs!.id] ?? n.attrs!.label ?? '' }
+      if (n.type === 'evidenceRef') {
+        const e = refNumbers[n.attrs!.id]
+        return { text: e ? refText(e.party, e.n, n.attrs!.form) : (n.attrs!.label ?? '') }
+      }
       const marks = new Set(n.marks?.map((m) => m.type))
       return { text: n.text ?? '', bold: marks.has('bold'), italics: marks.has('italic'), strike: marks.has('strike'), underline: marks.has('underline') }
     })
@@ -248,8 +260,30 @@ const PLACEHOLDER = /\[\s*([^[\]{}<>"\d=]{1,20}?)\s*\]/g
 // 입증방법 아래 "갑 제N호증". 가지번호(제1호증의 1, 제2호증 1내지 5)·범위(제1호증 내지 제3호증, 제1호증, 제2호증)는 번호를 매기면 뜻이 바뀌어 제외
 const EVIDENCE = /^\s*([갑을병])\s*제\s*(\d+)\s*호증(?!\s*(?:의|내지|[~～,\d]))\s*/
 const EVIDENCE_SECTIONS = /^(입증방법|증명방법|증거방법)$/
-// 본문의 "갑 제N호증" 참조. 앞 글자가 한글이면 조사("차용증을 제1호증")라 제외, 범위(내지·~·"제1호증, 제2호증")는 뒤 번호가 안 따라가서 제외
-const EVIDENCE_REF = /(?<![가-힣])([갑을병])\s*제\s*(\d+)\s*호증(?!\s*(?:내지|[~～]|,\s*제))/g
+// 본문 호증 참조 묶음: "갑 제1호증" / "갑 제1호증 내지 제3호증" / "갑 제1호증, 제2호증" (2·3번 그룹)
+//   / "갑 제1, 2호증" / "갑 제1 내지 3호증" (4·5번 그룹, 번호만 나열 — 뒤에 "의 1" 가지번호가 붙으면 제외)
+// 앞 글자가 한글이면 조사("차용증을 제1호증")라 제외
+const REF_SEP = String.raw`\s*(?:,|내지|[~～])\s*`
+export const EVIDENCE_REF_GROUP = new RegExp(
+  String.raw`(?<![가-힣])([갑을병])\s*제\s*(?:(\d+)\s*호증((?:${REF_SEP}제\s*\d+\s*호증)*)|(\d+)((?:${REF_SEP}\d+)+)\s*호증(?!\s*의\s*\d))`,
+  'g',
+)
+
+export type RefPiece = string | { party: string; n: number; form: RefForm }
+
+/**
+ * 참조 묶음 매치(EVIDENCE_REF_GROUP) → 글자·참조 조각. 예: "갑 제1, 2호증" → ["갑 제", {n:1,number}, ", ", {n:2,number}, "호증"]
+ * 묶음 안 모든 번호가 exists를 만족할 때만 돌려줌 — 일부만 참조가 되면 번호가 바뀔 때 범위 뜻이 틀어짐
+ */
+export function evidenceRefPieces(m: RegExpMatchArray, exists: (party: string, n: number) => boolean): RefPiece[] | null {
+  const party = m[1]
+  const compact = m[4] !== undefined
+  const pieces: RefPiece[] = compact ? [`${party} 제`, { party, n: Number(m[4]), form: 'number' }] : [{ party, n: Number(m[2]), form: 'full' }]
+  for (const [, sep, n] of (compact ? m[5] : m[3]).matchAll(/(\s*(?:,|내지|[~～])\s*)(?:제\s*)?(\d+)(?:\s*호증)?/g))
+    pieces.push(sep, { party, n: Number(n), form: compact ? 'number' : 'short' })
+  if (compact) pieces.push('호증')
+  return pieces.every((p) => typeof p === 'string' || (p.n >= 1 && exists(p.party, p.n))) ? pieces : null
+}
 
 const NUM_MARKERS: [RegExp, (s: string) => number][] = [
   [/^\s*(\d{1,2})\.(?!\d)\s*/, Number], // 1.  (2026. 같은 연도는 제외)
@@ -434,19 +468,28 @@ export function normalizeLegalHtml(html: string) {
   }
 
   // 본문의 "갑 제N호증" → 호증 참조(span[data-evidence-ref]). 자동 번호로 바꾼 증거가 있을 때만 → 증거 번호가 바뀌면 참조도 따라감
+  // 범위·나열("갑 제1호증 내지 제3호증", "갑 제1, 2호증")은 번호마다 참조로, 묶음 안에 없는 증거가 있으면 전체를 글자로
   const refTexts: Text[] = []
   const walker = doc.createTreeWalker(doc.body, NodeFilter.SHOW_TEXT)
   for (let t = walker.nextNode() as Text | null; t; t = walker.nextNode() as Text | null) refTexts.push(t)
   for (const t of refTexts) {
     const frag = doc.createDocumentFragment()
     let last = 0
-    for (const m of t.data.matchAll(EVIDENCE_REF)) {
-      const n = Number(m[2])
-      if (n < 1 || n > (evidence[m[1]] ?? 0)) continue
-      const span = doc.createElement('span')
-      span.setAttribute('data-evidence-ref', `ev-${m[1]}-${n}`)
-      span.textContent = evidenceText(m[1], n)
-      frag.append(t.data.slice(last, m.index), span)
+    for (const m of t.data.matchAll(EVIDENCE_REF_GROUP)) {
+      const pieces = evidenceRefPieces(m, (party, n) => n <= (evidence[party] ?? 0))
+      if (!pieces) continue
+      frag.append(t.data.slice(last, m.index))
+      for (const piece of pieces) {
+        if (typeof piece === 'string') {
+          frag.append(piece)
+          continue
+        }
+        const span = doc.createElement('span')
+        span.setAttribute('data-evidence-ref', `ev-${piece.party}-${piece.n}`)
+        if (piece.form !== 'full') span.setAttribute('data-form', piece.form)
+        span.textContent = refText(piece.party, piece.n, piece.form)
+        frag.append(span)
+      }
       last = m.index! + m[0].length
     }
     if (last) {
