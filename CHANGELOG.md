@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-15
+
 ### Added
 
 - 지급명령 인지대·송달료 자동 계산 — `calcPaymentOrderStampFee`(소장 인지액의 1/10, 종이 신청 기준), 송달료 독촉 6회분.
@@ -41,6 +43,7 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hwondev/legal-doc-editor/releases/tag/v0.1.0
