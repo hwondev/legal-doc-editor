@@ -258,6 +258,7 @@ assert.deepEqual(withCourtFees(copies, {}, { parties: 4, opponents: 1 }), { '입
 assert.deepEqual(withCourtFees(copies, { '소장 부본 통수': '3통' }), { '입증방법 통수': '2통', '소장 부본 통수': '3통' })
 assert.deepEqual(withCourtFees(copies, {}, { electronic: true }), {})
 assert.deepEqual(withCourtFees(['답변서 부본 통수'], {}), { '답변서 부본 통수': '1통' }) // 답변서 부본은 원고(상대방) 수
+assert.deepEqual(withCourtFees(['준비서면 부본 통수'], {}, { parties: 3 }), { '준비서면 부본 통수': '2통' }) // 준비서면 부본도 상대방 수
 for (const id of ['complaint-loan', 'complaint-debt-nonexistence']) {
   const html = templates.find((t) => t.id === id)!.html
   assert.ok(html.includes('위 입증방법 각 {{입증방법 통수}}') && html.includes('소장 부본 {{소장 부본 통수}}'), id)
@@ -269,6 +270,13 @@ assert.match(answer, /<h3>청구취지에 대한 답변<\/h3>[\s\S]*<h3>청구�
 assert.match(answer, /data-evidence="을"/)
 assert.ok(answer.includes('위 입증방법 각 {{입증방법 통수}}') && answer.includes('답변서 부본 {{답변서 부본 통수}}'))
 assert.doesNotMatch(answer, /\{\{(인지액|인지대|송달료|소가)/)
+
+// 준비서면: 법 제274조 항목(상대방 주장에 대한 진술·공격방어방법·상대방 증거에 대한 의견), 갑 호증과 본문 참조, 첨부서류 통수 변수, 비용 변수 없음
+const brief = templates.find((t) => t.id === 'preparatory-brief')!.html
+for (const item of ['피고 주장에 대한 반박', '원고의 추가 주장', '피고가 낸 증거에 대한 의견']) assert.ok(brief.includes(item), item)
+assert.match(brief, /data-evidence="갑" data-evidence-id="brief-1"/)
+assert.ok(brief.includes('위 입증방법 각 {{입증방법 통수}}') && brief.includes('준비서면 부본 {{준비서면 부본 통수}}'))
+assert.doesNotMatch(brief, /\{\{(인지액|인지대|송달료|소가)/)
 
 // 금액 한글 표기: "일"을 빼지 않음(일만·일십), 빈 자리·빈 묶음은 건너뜀
 assert.equal(toKoreanAmount(37_200_000), '삼천칠백이십만')
@@ -288,7 +296,7 @@ assert.equal(parseAmount('금액 미정'), 0)
 // 문서 템플릿: 제목·변수가 있고, 실제 주민등록번호·전화번호 형식이 들어가지 않음
 assert.deepEqual(
   templates.map((t) => t.id),
-  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'answer', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
+  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'answer', 'preparatory-brief', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
 )
 for (const t of templates) {
   assert.match(t.html, /<h1>[^<]+<\/h1>/, t.id)
