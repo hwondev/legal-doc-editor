@@ -8,7 +8,7 @@ import { findCitations, formatCaseCitation } from '../src/citation.ts'
 import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
 import { templates } from '../src/templates.ts'
-import { clauses } from '../src/clauses.ts'
+import { clauses, groupClauses } from '../src/clauses.ts'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -216,5 +216,13 @@ for (const c of clauses) {
   assert.doesNotMatch(c.html, /제\s*\d+\s*조/, c.id)
   assert.doesNotMatch(c.html, /\d{6}-\d{7}|01[016789]-\d{3,4}-\d{4}/, c.id)
 }
+
+// 조항 분류별 보기: 분류는 처음 나온 순, 분류 선택·검색·조합, 빈 묶음은 빠짐
+const ids = (groups: ReturnType<typeof groupClauses>) => groups.map(([cat, items]) => [cat, items.map((c) => c.id)])
+assert.deepEqual(groupClauses(clauses).map(([cat]) => cat), [...new Set(clauses.map((c) => c.category))])
+assert.equal(groupClauses(clauses).flatMap(([, items]) => items).length, clauses.length)
+assert.deepEqual(ids(groupClauses(clauses, { category: '책임' })), [['책임', ['damages', 'force-majeure']]])
+assert.deepEqual(ids(groupClauses(clauses, { query: '해지' })), [['종료', ['termination']]])
+assert.deepEqual(groupClauses(clauses, { category: '분쟁', query: '해지' }), [])
 
 console.log('ok')

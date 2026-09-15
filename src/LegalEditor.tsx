@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 import { EditorContent, useEditor, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { TableKit } from '@tiptap/extension-table'
 import { Variable, toChips, type Values } from './variable'
 import { Numbering } from './numbering'
 import { CitationLink, formatCaseCitation, type CaseResult } from './citation'
-import type { Clause } from './clauses'
+import { groupClauses, type Clause } from './clauses'
 import { withCourtFees, type CourtFeeOptions } from './fees'
 import { formatAmount, parseAmount } from './amount'
 import { fromFile, toDocx, toHwp, toHwpx } from './io'
@@ -60,6 +60,8 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
   const [cases, setCases] = useState<CaseResult[] | null>(null)
   const [caseStatus, setCaseStatus] = useState('')
   const [clauseFilter, setClauseFilter] = useState('')
+  const [clauseCategory, setClauseCategory] = useState('') // '' = 전체
+  const clauseGroups = clauses ? groupClauses(clauses, { category: clauseCategory, query: clauseFilter }) : []
   // 화면·저장에 쓰는 값 = 입력값 + (autoFees면) 비어 있는 인지액·송달료 계산값
   const shown = autoFees ? withCourtFees(names, values, autoFees === true ? {} : autoFees) : values
 
@@ -185,24 +187,34 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
           <section className="le-clauses">
             <h3>조항 라이브러리</h3>
             <input value={clauseFilter} placeholder="조항 찾기 (예: 해지)" onChange={(e) => setClauseFilter(e.target.value)} />
+            <div className="le-clause-cats" role="group" aria-label="조항 분류">
+              {['', ...new Set(clauses.map((c) => c.category))].map((cat) => (
+                <button key={cat || '전체'} type="button" aria-pressed={clauseCategory === cat} onClick={() => setClauseCategory(cat)}>
+                  {cat || '전체'} <span>{cat ? clauses.filter((c) => c.category === cat).length : clauses.length}</span>
+                </button>
+              ))}
+            </div>
             <ul className="le-clause-list">
-              {clauses
-                .filter((c) => `${c.category} ${c.title}`.includes(clauseFilter.trim()))
-                .map((c) => (
-                  <li key={c.id}>
-                    <button
-                      type="button"
-                      disabled={!editable}
-                      title="커서 위치에 조항 넣기"
-                      // 조항 HTML의 줄바꿈·들여쓰기가 빈 항목(빈 "1." 호)으로 들어가지 않게 공백을 버림
-                      onClick={() => editor?.chain().focus().insertContent(toChips(c.html), { parseOptions: { preserveWhitespace: false } }).run()}
-                    >
-                      <small>{c.category}</small>
-                      {c.title}
-                    </button>
-                  </li>
-                ))}
+              {clauseGroups.map(([cat, items]) => (
+                <Fragment key={cat}>
+                  {!clauseCategory && <li className="le-clause-group">{cat}</li>}
+                  {items.map((c) => (
+                    <li key={c.id}>
+                      <button
+                        type="button"
+                        disabled={!editable}
+                        title="커서 위치에 조항 넣기"
+                        // 조항 HTML의 줄바꿈·들여쓰기가 빈 항목(빈 "1." 호)으로 들어가지 않게 공백을 버림
+                        onClick={() => editor?.chain().focus().insertContent(toChips(c.html), { parseOptions: { preserveWhitespace: false } }).run()}
+                      >
+                        {c.title}
+                      </button>
+                    </li>
+                  ))}
+                </Fragment>
+              ))}
             </ul>
+            {clauseGroups.length === 0 && <p className="le-hint">맞는 조항이 없어요.</p>}
           </section>
         )}
         {searchCases && (

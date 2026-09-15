@@ -86,7 +86,7 @@ export default function Page() {
 
 ### 조항 라이브러리
 
-`clauses`를 넘기면 오른쪽 패널에 조항 목록이 생겨요. 검색칸에서 제목이나 분류로 찾고, 누르면 커서 위치에 조항이 들어가요. 조항 안의 `{{변수}}`는 입력칸에 바로 나타나고 뒤쪽 조 번호는 알아서 밀려요.
+`clauses`를 넘기면 오른쪽 패널에 조항 목록이 생겨요. 분류 칩(전체·일반·기간·의무·책임·종료·분쟁)으로 좁히거나 검색칸에서 제목·분류로 찾고, 누르면 커서 위치에 조항이 들어가요. `전체`에서는 분류별로 묶어 보여줘요. 조항 안의 `{{변수}}`는 입력칸에 바로 나타나고 뒤쪽 조 번호는 알아서 밀려요.
 
 ```tsx
 import { LegalEditor, clauses } from 'legal-doc-editor'
@@ -141,6 +141,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 | --- | --- |
 | `<LegalEditor content values onChange onValuesChange editable autoFees searchCases clauses hwpWasmUrl />` | 에디터 컴포넌트 |
 | `clauses` | 기본 조항 목록 `{ id, title, category, html }[]` |
+| `groupClauses(clauses, { category, query })` | 조항을 분류별로 묶음 `[분류, 조항[]][]` (분류 선택·검색 적용) |
 | `formatCaseCitation(result)` | 판례 검색 결과 → `대법원 2016. 4. 28. 선고 2015다12345 판결` |
 | `calcStampFee(소가, { electronic })` | 소장 인지액(원) |
 | `calcPaymentOrderStampFee(청구금액)` | 지급명령 신청서 인지대(원) — 종이 신청 기준 |
