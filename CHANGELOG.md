@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-09-16
+
 ### Added
 
 - 오른쪽 패널 섹션 접기 — 입력값·템플릿·조항 라이브러리·판례 검색을 제목을 눌러 접고 펼 수 있음(기본 `<details>`/`<summary>`). 처음에는 모두 펼친 상태이고, 접은 섹션은 입력하거나 문서를 고쳐도 접힌 채로 있음
@@ -205,7 +207,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.22.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.23.0...HEAD
+[0.23.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.19.0...v0.20.0
