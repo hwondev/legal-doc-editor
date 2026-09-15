@@ -6,6 +6,7 @@ import { Variable, toChips, type Values } from './variable'
 import { Numbering } from './numbering'
 import { CitationLink } from './citation'
 import { withCourtFees, type CourtFeeOptions } from './fees'
+import { formatAmount, parseAmount } from './amount'
 import { fromFile, toDocx, toHwpx } from './io'
 import './legal.css'
 
@@ -99,6 +100,12 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
 
   const cmd = () => editor!.chain().focus()
   const toggleNum = (level: number) => cmd().setNumbering(editor!.getAttributes('paragraph').num === level ? null : level).run()
+  // 선택한 글에서 숫자만 뽑아 금액 서식으로 바꿈 ("37200000", "3,720만" → 숫자 부분)
+  const amount = (style: '소장' | '계약서') => {
+    const { from, to } = editor!.state.selection
+    const n = parseAmount(editor!.state.doc.textBetween(from, to))
+    if (n) cmd().insertContentAt({ from, to }, formatAmount(n, style)).run()
+  }
 
   return (
     <div className="le-root">
@@ -119,6 +126,8 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             <button type="button" onClick={() => cmd().toggleBold().run()}><b>B</b></button>
             <button type="button" onClick={insertVar}>{'{{ }}'} 변수</button>
             <button type="button" onClick={() => cmd().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run()}>표</button>
+            <button type="button" title="선택한 금액 → 금 37,200,000원" onClick={() => amount('소장')}>금액</button>
+            <button type="button" title="선택한 금액 → 금 삼천칠백이십만 원정(₩37,200,000)" onClick={() => amount('계약서')}>금액(한글)</button>
             <span className="le-spacer" />
             <label className="le-btn">
               열기
