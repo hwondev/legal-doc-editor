@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.21.0] - 2026-09-16
+
 ### Added
 
 - 에디터 안 템플릿 선택 — `LegalEditor`의 `templates` 옵션. 넘기면 툴바에 **템플릿…** 선택이 생기고(원고·신청인 / 피고 / 기타 묶음), 고르면 문서를 그 템플릿으로 바꿈. 작성 중인 내용이 있으면 먼저 확인하고, 되돌리기로 돌아올 수 있음. 입력값은 그대로 둠
@@ -189,7 +191,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.20.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.21.0...HEAD
+[0.21.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.20.0...v0.21.0
 [0.20.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.19.0...v0.20.0
 [0.19.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.18.0...v0.19.0
 [0.18.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.17.0...v0.18.0
