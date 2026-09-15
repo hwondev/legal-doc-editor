@@ -173,6 +173,31 @@ export async function toHwpx(doc: JSONContent, values: Values): Promise<Blob> {
   return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/hwp+zip' })
 }
 
+let rhwp: Promise<typeof import('@rhwp/core')> | undefined
+
+/**
+ * 에디터 JSON + 입력값 → .hwp(HWP 5.0) Blob. toHwpx 결과를 @rhwp/core(WASM, 약 10MB — 처음 저장할 때만 불러옴)로 변환
+ * `wasm`: WASM 파일 주소나 바이트. 번들러가 WASM 경로를 못 찾을 때 넘김 (예: public에 복사한 '/rhwp_bg.wasm')
+ * ponytail: 한글 프로그램에서 열리는지는 사람이 확인해야 함 — 여기선 hwp-convert로 다시 읽어 글자·구조만 검증함
+ */
+export async function toHwp(doc: JSONContent, values: Values, opts: { wasm?: string | URL | BufferSource } = {}): Promise<Blob> {
+  const hwpx = new Uint8Array(await (await toHwpx(doc, values)).arrayBuffer())
+  rhwp ??= import('@rhwp/core').then(async (m) => {
+    await m.default(opts.wasm === undefined ? undefined : { module_or_path: opts.wasm })
+    return m
+  })
+  const { HwpDocument } = await rhwp.catch((err) => {
+    rhwp = undefined // 다음 저장 때 다시 시도
+    throw err
+  })
+  const converted = new HwpDocument(hwpx)
+  try {
+    return new Blob([converted.exportHwp() as Uint8Array<ArrayBuffer>], { type: 'application/x-hwp' })
+  } finally {
+    converted.free()
+  }
+}
+
 const ARTICLE = /^\s*제\s*\d+\s*조(?:의\s*\d+)?\s*/
 const CLAUSE = /^\s*[①-⑳]\s*/
 const ITEM = /^\s*(\d+)\.\s*/

@@ -1,6 +1,8 @@
 // 번호 매기기·이스케이프·hwpx 생성·인용 인식 확인 (DOM 없이 도는 부분만). 실행: npm run check
 import assert from 'node:assert/strict'
-import { toHwpx, toPlainHtml } from '../src/io.ts'
+import { readFileSync } from 'node:fs'
+import { hwpToText } from 'hwp-convert'
+import { toHwp, toHwpx, toPlainHtml } from '../src/io.ts'
 import { findCitations, formatCaseCitation } from '../src/citation.ts'
 import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FEE, withCourtFees } from '../src/fees.ts'
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
@@ -62,6 +64,14 @@ assert.match(html, /<table><tr><td colspan="2">합계<br>2줄<\/td><\/tr><tr><td
 
 const hwpx = new Uint8Array(await (await toHwpx(doc, {})).arrayBuffer())
 assert.deepEqual([...hwpx.slice(0, 2)], [0x50, 0x4b]) // zip
+
+// .hwp 저장: HWP 5.0(CFB) 파일이 나오고, 다시 읽으면 번호·표·변수값까지 글자가 그대로
+const wasm = readFileSync('node_modules/@rhwp/core/rhwp_bg.wasm')
+const hwpBytes = new Uint8Array(await (await toHwp(doc, { 갑: '<갑&>' }, { wasm })).arrayBuffer())
+assert.deepEqual([...hwpBytes.slice(0, 4)], [0xd0, 0xcf, 0x11, 0xe0]) // CFB(OLE) 서명
+const noSpace = (s: string) => s.replace(/\s/g, '')
+const expectedText = noSpace(toPlainHtml(doc, { 갑: '<갑&>' }).replace(/<[^>]+>/g, '').replace(/&#(\d+);/g, (_, c) => String.fromCharCode(+c)))
+assert.equal(noSpace(await hwpToText(hwpBytes)), expectedText)
 
 // 판례·법령 인용 인식
 const cites = (s: string) => findCitations(s).map((c) => `${c.type}:${c.text}`)

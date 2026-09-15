@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- `.hwp`(HWP 5.0) 바로 저장 — `toHwp`와 툴바 **한글(.hwp) 저장** 버튼, `hwpWasmUrl` 옵션. `.hwpx`를 [@rhwp/core](https://github.com/edwardkim/rhwp)(WASM)로 변환하며, WASM은 처음 저장할 때만 불러옴
+- 저장에 실패하면 알림을 띄움
+
 ## [0.4.0] - 2026-09-15
 
 ### Added
