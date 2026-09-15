@@ -65,11 +65,27 @@ export default function Page() {
 
 날짜(`2026. 9. 2.`), 전화번호, 계좌번호는 인용으로 보지 않아요. 다만 인용 인식은 글자 모양만 보는 것이라 놓치거나 잘못 잡을 수 있고, 링크가 가리키는 조문이 실제로 맞는지는 직접 확인해 주세요.
 
+### 인지액·송달료 자동 계산
+
+`<LegalEditor autoFees />`로 켜면, 입력값 `소가`(또는 `소송목적의 값`)를 넣었을 때 이름이 `인지액`·`송달료`로 시작하는 변수(예: `{{인지액 산정 필요}}`)를 계산해서 채워요. 직접 입력한 값이 있으면 그 값을 써요.
+
+| 항목 | 기준 | 근거 |
+| --- | --- | --- |
+| 인지액 | 1천만원 미만 × 0.5% / 1억원 미만 × 0.45% + 5천원 / 10억원 미만 × 0.4% + 5만5천원 / 그 이상 × 0.35% + 55만5천원. 100원 미만 버림, 최저 1천원 | 「민사소송 등 인지법」 제2조 |
+| 전자소송 인지액 | 위 계산식 × 0.9 후 100원 미만 버림, 최저 900원 — `autoFees={{ electronic: true }}` | 인지법 제16조, [전자소송포털](https://ecfs.scourt.go.kr/psp/link.on?m=PSP007P01) |
+| 송달료 | 당사자 수 × 회분 × 1회 송달료. 소가 3천만원 이하(소액) 10회분, 넘으면 15회분. 당사자 수 기본 2 — `autoFees={{ parties: 3 }}` | 「송달료규칙의 시행에 따른 업무처리요령」 별표 1, 「소액사건심판규칙」 제1조의2 |
+| 1회 송달료 | 5,500원 (2025. 6. 1.부터). 바뀌면 `autoFees={{ unitFee: 5600 }}`처럼 덮어쓰기 | 법원 공지 |
+
+> 계산 결과는 **참고용**이에요. 제1심 소장 기준이고 항소·상고·반소는 계산하지 않아요. 실제 납부액은 법원 안내를 확인하세요.
+
 ## API
 
 | 이름 | 설명 |
 | --- | --- |
-| `<LegalEditor content values onChange onValuesChange editable />` | 에디터 컴포넌트 |
+| `<LegalEditor content values onChange onValuesChange editable autoFees />` | 에디터 컴포넌트 |
+| `calcStampFee(소가, { electronic })` | 소장 인지액(원) |
+| `calcServiceFee({ parties, procedure, unitFee })` | 송달료(원). `procedure`: 소액·단독·합의·항소·상고·조정 |
+| `withCourtFees(names, values, options)` | 비어 있는 `인지액…`·`송달료…` 변수를 계산값으로 채운 입력값 |
 | `fillTemplate(html, values)` | 변수를 채운 완성본 HTML. `.legal-doc` 안에서 렌더하면 번호가 붙어요 |
 | `toDocx(editor.getJSON(), values)` | `.docx` Blob 생성 |
 | `toHwpx(editor.getJSON(), values)` | `.hwpx` Blob 생성 |

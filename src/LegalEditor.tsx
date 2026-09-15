@@ -5,6 +5,7 @@ import { TableKit } from '@tiptap/extension-table'
 import { Variable, toChips, type Values } from './variable'
 import { Numbering } from './numbering'
 import { CitationLink } from './citation'
+import { withCourtFees, type CourtFeeOptions } from './fees'
 import { fromFile, toDocx, toHwpx } from './io'
 import './legal.css'
 
@@ -16,6 +17,8 @@ export interface LegalEditorProps {
   onChange?: (html: string) => void
   onValuesChange?: (values: Values) => void
   editable?: boolean
+  /** 입력값에 `소가`가 있으면 `인지액…`·`송달료…` 변수를 계산해 채움 (직접 입력한 값이 우선, 참고용) */
+  autoFees?: boolean | CourtFeeOptions
 }
 
 function varNames(editor: Editor) {
@@ -42,9 +45,11 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 
-export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true }: LegalEditorProps) {
+export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees }: LegalEditorProps) {
   const [values, setValues] = useState(initial)
   const [names, setNames] = useState<string[]>([])
+  // 화면·저장에 쓰는 값 = 입력값 + (autoFees면) 비어 있는 인지액·송달료 계산값
+  const shown = autoFees ? withCourtFees(names, values, autoFees === true ? {} : autoFees) : values
 
   const editor = useEditor({
     extensions: [StarterKit.configure({ heading: { levels: [1, 2, 3] } }), TableKit, Variable, Numbering, CitationLink],
@@ -61,9 +66,9 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
 
   useEffect(() => {
     if (!editor) return
-    editor.storage.variable.values = values
+    editor.storage.variable.values = shown
     editor.storage.variable.views.forEach((update) => update())
-  }, [editor, values])
+  }, [editor, shown])
 
   const setValue = (name: string, v: string) => {
     const next = { ...values, [name]: v }
@@ -89,7 +94,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
 
   const save = async (to: typeof toDocx, ext: string) => {
     const title = editor!.state.doc.firstChild?.textContent.trim() || '문서'
-    download(await to(editor!.getJSON(), values), `${title}.${ext}`)
+    download(await to(editor!.getJSON(), shown), `${title}.${ext}`)
   }
 
   const cmd = () => editor!.chain().focus()
@@ -132,7 +137,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
         {names.map((n) => (
           <label key={n}>
             {n}
-            <input value={values[n] ?? ''} onChange={(e) => setValue(n, e.target.value)} />
+            <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
           </label>
         ))}
       </aside>
