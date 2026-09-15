@@ -16,8 +16,8 @@ export interface Citation {
 
 // 사건번호: 연도 + 사건부호(한글 1~3자) + 번호. 앞뒤에 숫자가 붙으면 제외해서
 // 날짜(2026. 9. 2.)·전화번호·계좌번호(3333-17-4044109)와 섞이지 않게 함
-// ponytail: 사건부호를 목록으로 두지 않아 "1234만5678"류 금액 표기만 단위 글자로 막아 둠
-const CASE_NO = String.raw`(?<!\d)\d{4}(?![만억천])[가-힣]{1,3}\d{1,6}(?!\d)`
+// ponytail: 사건부호를 목록으로 두지 않아 "1234만5678"류 금액, "2024년3월"류 붙여 쓴 날짜만 단위 글자로 막아 둠
+const CASE_NO = String.raw`(?<!\d)\d{4}(?![만억천년월일원])[가-힣]{1,3}\d{1,6}(?!\d)`
 const COURT = String.raw`(?:[가-힣]{0,6}법원(?:\s*[가-힣]{2,6}지원)?|헌법재판소)`
 const DATE = String.raw`\d{4}\.\s*\d{1,2}\.\s*\d{1,2}\.`
 // 대법원 2016. 4. 28. 선고 2015다12345 판결 / 대법원 2020. 1. 9.자 2019마123 결정
@@ -29,6 +29,10 @@ const LAW = String.raw`(?<lawName>${LAW_NAME})\s*제\s*(?<jo>\d+)\s*조(?:\s*의
 // 왼쪽부터 가장 먼저 맞는 것을 쓰므로 판결·결정 전체가 그 안의 사건번호보다 앞서 잡힘
 const CITATION = new RegExp(String.raw`${FULL_CASE}|${LAW}|(?<bare>${CASE_NO})`, 'g')
 
+// "…법"으로 끝나지만 법령 이름이 아닌 흔한 낱말 ("불법행위의 방법 제3조" 같은 오인 방지)
+const NOT_LAW = /^[방불합위적탈편문어용수요기비사입공]법$/
+
+// 법령명은 공식 명칭 그대로(띄어쓰기 포함) 넣어도 조문이 열림 — law.go.kr에서 확인 (2026-09-15)
 const url = (...path: string[]) => `https://www.law.go.kr/${path.map(encodeURIComponent).join('/')}`
 
 /** 본문 글에서 판례·법령 인용을 찾음. 문서를 바꾸지 않고 위치만 알려줌 */
@@ -37,6 +41,7 @@ export function findCitations(text: string): Citation[] {
   for (const m of text.matchAll(CITATION)) {
     const g = m.groups!
     const caseNo = g.caseNo ?? g.bare
+    if (!caseNo && NOT_LAW.test(g.lawName!)) continue
     const from = m.index ?? 0
     out.push({
       type: caseNo ? 'case' : 'law',

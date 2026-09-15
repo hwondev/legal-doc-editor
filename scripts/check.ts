@@ -78,6 +78,8 @@ assert.deepEqual(cites('2026. 9. 2. 계약을 체결하였다'), [])
 assert.deepEqual(cites('연락처 010-1234-5678 (사무실 02-530-1234)'), [])
 assert.deepEqual(cites('계좌번호 3333-17-4044109'), [])
 assert.deepEqual(cites('합의금 1234만5000원을 지급한다'), [])
+assert.deepEqual(cites('2024년3월5일 계약을 체결하였다'), [])
+assert.deepEqual(cites('불법행위의 방법 제3조에 따라'), [])
 
 // 위치와 링크 주소
 const [law] = findCitations('위반하여 민법 제750조에 따라')
