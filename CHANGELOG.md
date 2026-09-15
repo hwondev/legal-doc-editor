@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-15
+
 ### Added
 
 - 조항 라이브러리 — `clauses` 기본 조항 11개와 `LegalEditor`의 `clauses` 옵션. 검색해서 누르면 커서 위치에 조항이 들어가고 조 번호가 다시 매겨짐
@@ -47,7 +49,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/hwondev/legal-doc-editor/releases/tag/v0.1.0
