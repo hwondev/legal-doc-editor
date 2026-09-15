@@ -57,7 +57,7 @@ export function calcServiceFee({ parties, procedure, unitFee = SERVICE_UNIT_FEE 
 export const SMALL_CLAIM_LIMIT = 30_000_000
 
 export interface CourtFeeOptions {
-  /** 전자소송이면 인지액 10분의 9 */
+  /** 전자소송이면 인지액 10분의 9. 첨부서류 통수는 채우지 않음(전자소송은 정해진 제출 통수가 없음) */
   electronic?: boolean
   /** 원고 + 피고 수 (기본 2) */
   parties?: number
@@ -111,7 +111,12 @@ export function withCourtFees(names: string[], values: Values, opts: CourtFeeOpt
    * 첨부서류 통수. 「민사소송규칙」 제105조제2항: 서증은 상대방의 수에 1을 더한 수의 사본, 제48조제1항: 송달에 필요한 수의 부본
    * 출처: https://www.law.go.kr/법령/민사소송규칙 (확인 2026-09-16),
    *   대한법률구조공단 첨부서류 작성방법 https://support.klac.or.kr/front/contents/lawsuit/011.do ("위 입증방법 각 2통", 소장 부본은 피고 1명이면 1부·2명이면 2부)
-   * ponytail: 종이 제출 기준. 전자소송 제출 통수는 공식 안내로 확인하지 못해 electronic이면 채우지 않음
+   * 종이 제출 기준. 전자소송(electronic)이면 채우지 않음 — 소장에 적을 정해진 통수가 없음 (확인 2026-09-16):
+   *   「민사소송 등에서의 전자문서 이용 등에 관한 업무처리지침」(재판예규 제1933호) 제23조제3항: 부본·사본 제출의무 규정에도 불구하고
+   *   법 제11조제1항 각 호의 자(전자소송 동의를 한 등록사용자, 국가·지방자치단체 등)에게 송달할 부본·사본은 내지 않을 수 있음.
+   *   그 밖의 상대방에게는 법원이 전자문서를 출력해 송달하고(법 제12조제1항), 출력할 분량이 50쪽 이상이거나
+   *   상대방이 5인 이상이면 제출자에게 출력서면 제출을 명할 수 있음(규칙 제29조제2항, 지침 제23조제1항)
+   *   지침: https://portal.scourt.go.kr/pgp/main.on?w2xPath=PGP1051M04&c=900&jisCntntsSrno=2025000019074&srchwd=*&originDvsCd=07&rnum=3&pgDvs=1
    */
   if (!opts.electronic) {
     const opponents = Math.max(1, opts.opponents ?? parties - 1)
