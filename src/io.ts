@@ -250,7 +250,7 @@ export async function toHwp(doc: JSONContent, values: Values, opts: { wasm?: str
 const ARTICLE = /^\s*제\s*\d+\s*조(?:의\s*\d+)?\s*/
 const CLAUSE = /^\s*[①-⑳]\s*/
 const ITEM = /^\s*(\d+)\.\s*/
-const SECTION_NAMES = /^(청구취지|청구원인|신청취지|신청이유|고소취지|고소이유|고발취지|고발이유|입증방법|증명방법|증거방법|증거서류|첨부서류|당사자관계|사건개요|고소인|피고소인|범죄사실|증거자료|관련사건의수사및재판여부|기타)$/
+const SECTION_NAMES = /^(청구취지|청구원인|청구취지에대한답변|청구원인에대한답변|신청취지|신청이유|고소취지|고소이유|고발취지|고발이유|입증방법|증명방법|증거방법|증거서류|첨부서류|당사자관계|사건개요|고소인|피고소인|범죄사실|증거자료|관련사건의수사및재판여부|기타)$/
 // "청 구 취 지"처럼 4글자 이상을 띄워 쓴 짧은 줄, 또는 소장·고소장의 정해진 소제목
 // (3글자는 "이 춘 효" 같은 서명란 이름과 겹쳐서 제외)
 const isSection = (t: string) => t.length <= 20 && (/^[가-힣](\s+[가-힣]){3,7}$/.test(t) || SECTION_NAMES.test(t.replace(/\s/g, '')))
