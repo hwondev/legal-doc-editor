@@ -1,6 +1,6 @@
 {
   "name": "legal-doc-editor",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "법률문서(계약서·소장·고소장) 생성용 React 에디터 — 조항·번호 자동 매김, {{변수}} 채우기, 한글(hwp·hwpx)·Word(docx) 열기·저장",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,20 @@
   },
   "homepage": "https://github.com/hwondev/legal-doc-editor#readme",
   "bugs": "https://github.com/hwondev/legal-doc-editor/issues",
-  "keywords": ["react", "editor", "legal", "contract", "korean", "hwp", "hwpx", "docx", "tiptap", "법률문서", "계약서", "소장"],
+  "keywords": [
+    "react",
+    "editor",
+    "legal",
+    "contract",
+    "korean",
+    "hwp",
+    "hwpx",
+    "docx",
+    "tiptap",
+    "법률문서",
+    "계약서",
+    "소장"
+  ],
   "type": "module",
   "files": [
     "dist"
