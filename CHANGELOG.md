@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-16
+
 ### Added
 
 - 채무부존재 확인서 템플릿 `debt-nonexistence-certificate` — 빚을 갚았거나 합의한 뒤 채권자가 채무가 없음을 확인해 주는 문서. 당사자(이름·생년월일·주소), 원래 계약과 채무, 채무가 없어진 경위, 부존재 확인, 이후 청구하지 않음, 채권자·채무자 서명
@@ -96,7 +98,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.7.0...v0.8.0
