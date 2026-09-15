@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-16
+
 ### Added
 
 - 호증 범위·나열 참조 자동 갱신 — `갑 제1호증 내지 제3호증`, `갑 제1호증 ~ 제3호증`, `갑 제1호증, 제2호증`, `갑 제1, 2호증`, `갑 제1 내지 3호증`의 번호마다 자기 증거를 가리킴. 참조 모양 `data-form`(전체 `갑 제1호증` / 뒤쪽 `제3호증` / 번호만 `2`).
@@ -114,7 +116,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.9.0...v0.10.0
