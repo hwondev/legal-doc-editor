@@ -257,10 +257,18 @@ assert.deepEqual(withCourtFees(copies, {}, { parties: 3 }), { '입증방법 통�
 assert.deepEqual(withCourtFees(copies, {}, { parties: 4, opponents: 1 }), { '입증방법 통수': '2통', '소장 부본 통수': '1통' })
 assert.deepEqual(withCourtFees(copies, { '소장 부본 통수': '3통' }), { '입증방법 통수': '2통', '소장 부본 통수': '3통' })
 assert.deepEqual(withCourtFees(copies, {}, { electronic: true }), {})
+assert.deepEqual(withCourtFees(['답변서 부본 통수'], {}), { '답변서 부본 통수': '1통' }) // 답변서 부본은 원고(상대방) 수
 for (const id of ['complaint-loan', 'complaint-debt-nonexistence']) {
   const html = templates.find((t) => t.id === id)!.html
   assert.ok(html.includes('위 입증방법 각 {{입증방법 통수}}') && html.includes('소장 부본 {{소장 부본 통수}}'), id)
 }
+
+// 답변서: 규칙 제65조 항목(청구취지에 대한 답변·청구원인에 대한 답변), 피고 쪽 을 호증, 첨부서류 통수 변수, 비용 변수 없음
+const answer = templates.find((t) => t.id === 'answer')!.html
+assert.match(answer, /<h3>청구취지에 대한 답변<\/h3>[\s\S]*<h3>청구원인에 대한 답변<\/h3>[\s\S]*<h3>입 증 방 법<\/h3>/)
+assert.match(answer, /data-evidence="을"/)
+assert.ok(answer.includes('위 입증방법 각 {{입증방법 통수}}') && answer.includes('답변서 부본 {{답변서 부본 통수}}'))
+assert.doesNotMatch(answer, /\{\{(인지액|인지대|송달료|소가)/)
 
 // 금액 한글 표기: "일"을 빼지 않음(일만·일십), 빈 자리·빈 묶음은 건너뜀
 assert.equal(toKoreanAmount(37_200_000), '삼천칠백이십만')
@@ -280,7 +288,7 @@ assert.equal(parseAmount('금액 미정'), 0)
 // 문서 템플릿: 제목·변수가 있고, 실제 주민등록번호·전화번호 형식이 들어가지 않음
 assert.deepEqual(
   templates.map((t) => t.id),
-  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
+  ['complaint-loan', 'complaint-debt-nonexistence', 'debt-nonexistence-certificate', 'answer', 'criminal-complaint-fraud', 'certified-letter', 'payment-order'],
 )
 for (const t of templates) {
   assert.match(t.html, /<h1>[^<]+<\/h1>/, t.id)
