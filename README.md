@@ -1,6 +1,6 @@
 # legal-doc-editor
 
-[![npm](https://img.shields.io/npm/v/legal-doc-editor)](https://www.npmjs.com/package/legal-doc-editor) [![license](https://img.shields.io/npm/l/legal-doc-editor)](./LICENSE)
+[![npm](https://img.shields.io/npm/v/legal-doc-editor)](https://www.npmjs.com/package/legal-doc-editor) [![CI](https://github.com/hwondev/legal-doc-editor/actions/workflows/ci.yml/badge.svg)](https://github.com/hwondev/legal-doc-editor/actions/workflows/ci.yml) [![license](https://img.shields.io/npm/l/legal-doc-editor)](./LICENSE)
 
 계약서·합의서 같은 **법률문서를 만드는 React 에디터**입니다.
 
