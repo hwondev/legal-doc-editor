@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-16
+
 ### Changed
 
 - 호증 시작 번호 유지 — 당사자의 첫 호증 문단을 지우거나(잘라내기·Backspace로 합치기 포함) 호증에서 풀거나 위에 새 호증을 넣으면, 시작 번호(`data-evidence-start`)가 지금 첫 호증 문단으로 옮겨가서 `갑 제5호증`부터 시작하던 목록이 1로 돌아가지 않음. 시작 번호를 직접 지운 경우와 문서를 통째로 바꾼 경우(파일 열기·템플릿)는 옮기지 않음
@@ -127,7 +129,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.14.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.15.0...HEAD
+[0.15.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.14.0...v0.15.0
 [0.14.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.13.0...v0.14.0
 [0.13.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.11.0...v0.12.0
