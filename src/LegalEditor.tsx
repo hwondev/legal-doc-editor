@@ -5,6 +5,7 @@ import { TableKit } from '@tiptap/extension-table'
 import { Variable, toChips, type Values } from './variable'
 import { Numbering } from './numbering'
 import { CitationLink, formatCaseCitation, type CaseResult } from './citation'
+import type { Clause } from './clauses'
 import { withCourtFees, type CourtFeeOptions } from './fees'
 import { formatAmount, parseAmount } from './amount'
 import { fromFile, toDocx, toHwpx } from './io'
@@ -22,6 +23,8 @@ export interface LegalEditorProps {
   autoFees?: boolean | CourtFeeOptions
   /** 판례 검색 함수. 넘기면 오른쪽에 판례 검색 칸이 생기고, 결과를 누르면 인용 문구가 커서 위치에 들어감 */
   searchCases?: (query: string) => Promise<CaseResult[]>
+  /** 조항 목록. 넘기면 오른쪽에 조항 라이브러리가 생기고, 누르면 커서 위치에 조항이 들어감 (기본 제공 목록: `clauses`) */
+  clauses?: Clause[]
 }
 
 function varNames(editor: Editor) {
@@ -48,12 +51,13 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 
-export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases }: LegalEditorProps) {
+export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases, clauses }: LegalEditorProps) {
   const [values, setValues] = useState(initial)
   const [names, setNames] = useState<string[]>([])
   const [caseQuery, setCaseQuery] = useState('')
   const [cases, setCases] = useState<CaseResult[] | null>(null)
   const [caseStatus, setCaseStatus] = useState('')
+  const [clauseFilter, setClauseFilter] = useState('')
   // 화면·저장에 쓰는 값 = 입력값 + (autoFees면) 비어 있는 인지액·송달료 계산값
   const shown = autoFees ? withCourtFees(names, values, autoFees === true ? {} : autoFees) : values
 
@@ -168,6 +172,30 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
           </label>
         ))}
+        {clauses && (
+          <section className="le-clauses">
+            <h3>조항 라이브러리</h3>
+            <input value={clauseFilter} placeholder="조항 찾기 (예: 해지)" onChange={(e) => setClauseFilter(e.target.value)} />
+            <ul className="le-clause-list">
+              {clauses
+                .filter((c) => `${c.category} ${c.title}`.includes(clauseFilter.trim()))
+                .map((c) => (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      disabled={!editable}
+                      title="커서 위치에 조항 넣기"
+                      // 조항 HTML의 줄바꿈·들여쓰기가 빈 항목(빈 "1." 호)으로 들어가지 않게 공백을 버림
+                      onClick={() => editor?.chain().focus().insertContent(toChips(c.html), { parseOptions: { preserveWhitespace: false } }).run()}
+                    >
+                      <small>{c.category}</small>
+                      {c.title}
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        )}
         {searchCases && (
           <section className="le-cases">
             <h3>판례 검색</h3>
