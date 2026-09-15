@@ -37,6 +37,23 @@ const demoSearchCases = async (q: string) => {
   ]
 }
 
+// 호스팅한 사이트(프로덕션 빌드)에서는 Vercel 함수 api/cases로 실제 판례를 검색, 로컬 개발(npm run dev)에서는 위 예시 결과
+const searchCases = import.meta.env.PROD
+  ? async (q: string) => {
+      const res = await fetch(`/api/cases?q=${encodeURIComponent(q)}`)
+      const body = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(body?.error ?? `서버 응답 ${res.status}`)
+      // 함수가 없거나 엉뚱한 응답이 와도 목록이 깨지지 않게 (예: 배포 설정이 빠져 index.html이 돌아온 경우)
+      if (!Array.isArray(body)) throw new Error('판례 검색 응답을 읽지 못했어요')
+      return body
+    }
+  : demoSearchCases
+
 createRoot(document.getElementById('root')!).render(
-  <LegalEditor content={nda} values={{ 갑: '주식회사 가나다' }} autoFees searchCases={demoSearchCases} clauses={clauses} templates={templates} />,
+  <>
+    <p style={{ margin: 0, padding: '8px 16px', background: '#fff8e1', color: '#5b4400', font: '13px/1.5 system-ui, sans-serif' }}>
+      작성한 문서와 연 파일은 이 브라우저 안에서만 처리되고 서버에 저장하지 않아요(판례 검색어만 검색을 위해 서버를 거쳐요). 법률 자문이 아니니 제출 전에 내용을 꼭 확인하세요.
+    </p>
+    <LegalEditor content={nda} values={{ 갑: '주식회사 가나다' }} autoFees searchCases={searchCases} clauses={clauses} templates={templates} />
+  </>,
 )

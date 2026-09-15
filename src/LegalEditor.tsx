@@ -180,7 +180,10 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
     if (!searchCases || !q) return
     setCaseStatus('검색 중…')
     try {
-      setCases(await searchCases(q))
+      const found = await searchCases(q)
+      // 목록이 아닌 값이 오면 패널만 안내를 띄움 — 그대로 그리면 에디터 전체가 무너짐 (연결 설정이 잘못된 경우)
+      if (!Array.isArray(found)) throw new Error('검색 결과 형식이 올바르지 않아요')
+      setCases(found)
       setCaseStatus('')
     } catch (err) {
       setCases(null)

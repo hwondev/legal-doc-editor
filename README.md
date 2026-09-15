@@ -200,6 +200,18 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 - [ ] 표
 - [ ] 조항 라이브러리(자주 쓰는 조항 끼워 넣기)
 
+## 사이트로 호스팅 (Vercel)
+
+저장소에 사이트 배포 설정이 들어 있어요. 데모 페이지(`index.html`)를 앱으로 빌드하고, 판례 검색은 Vercel 함수(`api/cases.js`)가 국가법령정보 공동활용 API를 불러요.
+
+1. [vercel.com](https://vercel.com)에서 이 저장소를 가져오세요(Import). 빌드 설정은 `vercel.json`이 정해요 — `vite build --config vite.site.config.ts` → `site/`
+2. 프로젝트 **Settings → Environment Variables**에 `LAW_GO_KR_OC`(국가법령정보 공동활용 인증값)를 넣고 다시 배포하세요. 없으면 판례 검색만 "아직 설정되지 않았어요"로 나오고 나머지 기능은 그대로 돼요.
+3. 그다음부터는 `main`에 올라갈 때마다 자동으로 다시 배포돼요.
+
+- 문서와 연 파일은 브라우저 안에서만 처리되고 서버에 저장하지 않아요. 서버를 거치는 건 판례 검색어뿐이에요.
+- 같은 검색어 결과는 Vercel CDN에 1시간 캐시해서 API 호출을 줄여요.
+- 로컬에서 사이트 빌드만 확인하려면 `npx vite build --config vite.site.config.ts && npx vite preview --config vite.site.config.ts` (이때는 판례 검색 함수가 돌지 않아요)
+
 ## 개발
 
 ```bash
