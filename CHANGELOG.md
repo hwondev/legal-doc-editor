@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-15
+
 ### Added
 
 - 조항 라이브러리 분류별 보기 — 분류 칩(개수 표시)으로 좁히기, `전체`에서는 분류 제목 아래로 묶어 표시, 검색과 함께 적용. `groupClauses` export
@@ -72,7 +74,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.4.0...v0.5.0
