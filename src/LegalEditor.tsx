@@ -27,7 +27,7 @@ export interface LegalEditorProps {
   searchCases?: (query: string) => Promise<CaseResult[]>
   /** 조항 목록. 넘기면 오른쪽에 조항 라이브러리가 생기고, 누르면 커서 위치에 조항이 들어감 (기본 제공 목록: `clauses`) */
   clauses?: Clause[]
-  /** 템플릿 목록. 넘기면 툴바에 템플릿 선택이 생기고(분류별로 묶음), 고르면 문서를 그 템플릿으로 바꿈 (기본 제공 목록: `templates`) */
+  /** 템플릿 목록. 넘기면 오른쪽에 템플릿 목록(검색·분류)이 생기고, 누르면 문서를 그 템플릿으로 바꿈 (기본 제공 목록: `templates`) */
   templates?: Template[]
   /** .hwp 저장에 쓰는 @rhwp/core WASM 주소. 번들러가 WASM 경로를 못 찾을 때만 지정 (예: '/rhwp_bg.wasm') */
   hwpWasmUrl?: string
@@ -57,15 +57,63 @@ function download(blob: Blob, name: string) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 
+// 패널 목록 (템플릿·조항 라이브러리): 검색칸(분류·제목), 분류 칩(개수), 분류별 묶음. 누르면 onPick
+function Library<T extends { id: string; title: string; category: string }>({
+  title,
+  items,
+  placeholder,
+  empty,
+  disabled,
+  itemTitle,
+  onPick,
+}: {
+  title: string
+  items: T[]
+  placeholder: string
+  empty: string
+  disabled: boolean
+  itemTitle: (item: T) => string
+  onPick: (item: T) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [category, setCategory] = useState('') // '' = 전체
+  const groups = groupClauses(items, { category, query })
+  return (
+    <section className="le-clauses">
+      <h3>{title}</h3>
+      <input value={query} placeholder={placeholder} aria-label={`${title} 찾기`} onChange={(e) => setQuery(e.target.value)} />
+      <div className="le-clause-cats" role="group" aria-label={`${title} 분류`}>
+        {['', ...new Set(items.map((item) => item.category))].map((cat) => (
+          <button key={cat || '전체'} type="button" aria-pressed={category === cat} onClick={() => setCategory(cat)}>
+            {cat || '전체'} <span>{cat ? items.filter((item) => item.category === cat).length : items.length}</span>
+          </button>
+        ))}
+      </div>
+      <ul className="le-clause-list">
+        {groups.map(([cat, list]) => (
+          <Fragment key={cat}>
+            {!category && <li className="le-clause-group">{cat}</li>}
+            {list.map((item) => (
+              <li key={item.id}>
+                <button type="button" disabled={disabled} title={itemTitle(item)} onClick={() => onPick(item)}>
+                  {item.title}
+                </button>
+              </li>
+            ))}
+          </Fragment>
+        ))}
+      </ul>
+      {groups.length === 0 && <p className="le-hint">{empty}</p>}
+    </section>
+  )
+}
+
 export function LegalEditor({ content = '', values: initial = {}, onChange, onValuesChange, editable = true, autoFees, searchCases, clauses, templates, hwpWasmUrl }: LegalEditorProps) {
   const [values, setValues] = useState(initial)
   const [names, setNames] = useState<string[]>([])
   const [caseQuery, setCaseQuery] = useState('')
   const [cases, setCases] = useState<CaseResult[] | null>(null)
   const [caseStatus, setCaseStatus] = useState('')
-  const [clauseFilter, setClauseFilter] = useState('')
-  const [clauseCategory, setClauseCategory] = useState('') // '' = 전체
-  const clauseGroups = clauses ? groupClauses(clauses, { category: clauseCategory, query: clauseFilter }) : []
   // 화면·저장에 쓰는 값 = 입력값 + (autoFees면) 비어 있는 인지액·송달료 계산값
   const shown = autoFees ? withCourtFees(names, values, autoFees === true ? {} : autoFees) : values
 
@@ -111,9 +159,8 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
   }
 
   // 템플릿으로 시작: 작성한 내용이 있으면 먼저 물어봄. 바꾼 뒤에도 되돌리기(Ctrl·⌘+Z)로 돌아올 수 있음. 입력값은 그대로 둠(같은 이름 변수에 이어서 쓰임)
-  const startTemplate = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const template = templates?.find((t) => t.id === e.target.value)
-    if (!template || !editor) return
+  const startTemplate = (template: Template) => {
+    if (!editor) return
     if (!editor.isEmpty && !window.confirm(`지금 문서를 「${template.title}」 템플릿으로 바꿀까요? 되돌리기(Ctrl·⌘+Z)로 돌아올 수 있어요.`)) return
     editor.chain().focus().setContent(toChips(template.html), { emitUpdate: true }).run()
   }
@@ -191,23 +238,6 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             <button type="button" title="선택한 금액 → 금 37,200,000원" onClick={() => amount('소장')}>금액</button>
             <button type="button" title="선택한 금액 → 금 삼천칠백이십만 원정(₩37,200,000)" onClick={() => amount('계약서')}>금액(한글)</button>
             <span className="le-spacer" />
-            {templates && (
-              // value를 늘 비워 둬서 같은 템플릿을 다시 골라도 동작함
-              <select className="le-btn" aria-label="템플릿으로 시작" value="" onChange={startTemplate}>
-                <option value="" disabled>
-                  템플릿…
-                </option>
-                {groupClauses(templates).map(([category, items]) => (
-                  <optgroup key={category} label={category}>
-                    {items.map((t) => (
-                      <option key={t.id} value={t.id} title={t.description}>
-                        {t.title}
-                      </option>
-                    ))}
-                  </optgroup>
-                ))}
-              </select>
-            )}
             <label className="le-btn">
               열기
               <input type="file" accept=".docx,.doc,.hwp,.hwpx" hidden onChange={openFile} />
@@ -231,39 +261,28 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
           </label>
         ))}
+        {templates && (
+          <Library
+            title="템플릿"
+            items={templates}
+            placeholder="템플릿 찾기 (예: 답변서)"
+            empty="맞는 템플릿이 없어요."
+            disabled={!editable}
+            itemTitle={(t) => t.description}
+            onPick={startTemplate}
+          />
+        )}
         {clauses && (
-          <section className="le-clauses">
-            <h3>조항 라이브러리</h3>
-            <input value={clauseFilter} placeholder="조항 찾기 (예: 해지)" onChange={(e) => setClauseFilter(e.target.value)} />
-            <div className="le-clause-cats" role="group" aria-label="조항 분류">
-              {['', ...new Set(clauses.map((c) => c.category))].map((cat) => (
-                <button key={cat || '전체'} type="button" aria-pressed={clauseCategory === cat} onClick={() => setClauseCategory(cat)}>
-                  {cat || '전체'} <span>{cat ? clauses.filter((c) => c.category === cat).length : clauses.length}</span>
-                </button>
-              ))}
-            </div>
-            <ul className="le-clause-list">
-              {clauseGroups.map(([cat, items]) => (
-                <Fragment key={cat}>
-                  {!clauseCategory && <li className="le-clause-group">{cat}</li>}
-                  {items.map((c) => (
-                    <li key={c.id}>
-                      <button
-                        type="button"
-                        disabled={!editable}
-                        title="커서 위치에 조항 넣기"
-                        // 조항 HTML의 줄바꿈·들여쓰기가 빈 항목(빈 "1." 호)으로 들어가지 않게 공백을 버림
-                        onClick={() => editor?.chain().focus().insertContent(toChips(c.html), { parseOptions: { preserveWhitespace: false } }).run()}
-                      >
-                        {c.title}
-                      </button>
-                    </li>
-                  ))}
-                </Fragment>
-              ))}
-            </ul>
-            {clauseGroups.length === 0 && <p className="le-hint">맞는 조항이 없어요.</p>}
-          </section>
+          <Library
+            title="조항 라이브러리"
+            items={clauses}
+            placeholder="조항 찾기 (예: 해지)"
+            empty="맞는 조항이 없어요."
+            disabled={!editable}
+            itemTitle={() => '커서 위치에 조항 넣기'}
+            // 조항 HTML의 줄바꿈·들여쓰기가 빈 항목(빈 "1." 호)으로 들어가지 않게 공백을 버림
+            onPick={(c) => editor?.chain().focus().insertContent(toChips(c.html), { parseOptions: { preserveWhitespace: false } }).run()}
+          />
         )}
         {searchCases && (
           <section className="le-cases">
