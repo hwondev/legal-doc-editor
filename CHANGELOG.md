@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-16
+
 ### Added
 
 - 소장(채무부존재확인) 템플릿 `complaint-debt-nonexistence` — 청구취지(채무 부존재 확인·소송비용), 청구원인(당사자 관계·피고가 주장하는 채무·채무가 존재하지 않는 이유·확인을 구하는 이유), 입증방법(호증 자동 번호), 첨부서류.
@@ -90,7 +92,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.9.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.10.0...HEAD
+[0.10.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.6.0...v0.7.0
