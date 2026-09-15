@@ -5,6 +5,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- 옛 Word `.doc`(97–2003) 열기 — `fromDoc`, `fromFile`과 열기 버튼이 `.doc`를 받음. [@file-viewer/doc](https://www.npmjs.com/package/@file-viewer/doc)으로 읽어 글자·표를 옮긴 뒤 기존 구조 정리(제N조·①·1.·빈칸 변수)를 거침. 글자 서식·그림은 옮기지 않음
+
 ## [0.5.0] - 2026-09-15
 
 ### Added

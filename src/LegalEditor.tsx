@@ -160,7 +160,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
             <span className="le-spacer" />
             <label className="le-btn">
               열기
-              <input type="file" accept=".docx,.hwp,.hwpx" hidden onChange={openFile} />
+              <input type="file" accept=".docx,.doc,.hwp,.hwpx" hidden onChange={openFile} />
             </label>
             <button type="button" onClick={() => save(toDocx, 'docx')}>Word 저장</button>
             <button type="button" onClick={() => save(toHwpx, 'hwpx')}>한글(.hwpx) 저장</button>

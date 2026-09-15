@@ -6,8 +6,9 @@
 
 - **조·항·호 자동 번호**: 조를 넣거나 옮기면 제1조, ①, 1. 번호가 알아서 다시 매겨져요
 - **`{{변수}}` 채우기**: 본문에 `{{갑}}`을 입력하면 입력칸이 생기고, 값을 넣으면 문서에 반영돼요
-- **한글(.hwp·.hwpx)·Word(.docx) 열기·저장**: 일반 문단으로 쓴 계약서도 "제N조", "①", "1." 패턴을 인식해서 조·항·호 구조로 바꿔요
+- **한글(.hwp·.hwpx)·Word(.docx·.doc) 열기·저장**: 일반 문단으로 쓴 계약서도 "제N조", "①", "1." 패턴을 인식해서 조·항·호 구조로 바꿔요
   - 저장은 `.docx`, `.hwpx`, `.hwp`(HWP 5.0)예요. `.hwpx`는 한글 2014 이상에서 열려요
+  - 옛 Word `.doc`(97–2003)는 열기만 돼요. 글자와 표만 옮기고 굵게 같은 글자 서식과 그림은 옮기지 않아요
   - 파일 변환 라이브러리는 필요할 때만 불러와서 에디터 본체 번들은 가벼워요
 - **판례·법령 인용 링크**: 본문의 `민법 제750조`, `대법원 2016. 4. 28. 선고 2015다12345 판결`, `2024가단157033` 같은 인용을 알아보고 [국가법령정보센터](https://www.law.go.kr) 링크를 붙여요 (API 키가 필요 없어요)
 - **조항 라이브러리**: 비밀유지·계약해지·관할법원 같은 자주 쓰는 조항을 골라 커서 위치에 넣어요. 조 번호는 알아서 다시 매겨져요
@@ -154,7 +155,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 | `toHwpx(editor.getJSON(), values)` | `.hwpx` Blob 생성 |
 | `toHwp(editor.getJSON(), values, { wasm })` | `.hwp`(HWP 5.0) Blob 생성. `wasm`은 WASM 주소나 바이트(선택) |
 | `toPlainHtml(editor.getJSON(), values)` | 번호가 텍스트로 들어간 독립 HTML |
-| `fromFile(file)` | `.docx` / `.hwp` / `.hwpx`를 에디터용 HTML로 변환 (`fromDocx`, `fromHwp`도 있음) |
+| `fromFile(file)` | `.docx` / `.doc` / `.hwp` / `.hwpx`를 에디터용 HTML로 변환 (`fromDocx`, `fromDoc`, `fromHwp`도 있음) |
 | `normalizeLegalHtml(html)` | "제N조 / ① / 1." 문단을 조·항·호 구조로 변환 |
 | `Variable` | 다른 Tiptap 에디터에 넣어 쓸 수 있는 변수 확장 |
 | `Numbering` | 번호 문단 확장 (`setNumbering(1~4 \| null)`, Tab·Shift+Tab 단계 변경, 맨 앞 Backspace 해제) |
@@ -165,7 +166,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 
 - [x] HWP / HWPX 열기, HWPX 저장
 - [x] `.hwp` 바이너리로 바로 저장 ([rhwp](https://github.com/edwardkim/rhwp))
-- [ ] 옛 Word `.doc` 열기
+- [x] 옛 Word `.doc` 열기 ([@file-viewer/doc](https://www.npmjs.com/package/@file-viewer/doc))
 - [ ] 표
 - [ ] 조항 라이브러리(자주 쓰는 조항 끼워 넣기)
 

@@ -8,6 +8,6 @@ export default defineConfig({
   optimizeDeps: { exclude: ['@rhwp/core'] },
   build: {
     lib: { entry: 'src/index.ts', formats: ['es'], fileName: 'index', cssFileName: 'style' },
-    rollupOptions: { external: [/^react($|\/)/, /^react-dom($|\/)/, /^@tiptap\//, 'docx', 'mammoth', 'hwp-convert', '@rhwp/core'] },
+    rollupOptions: { external: [/^react($|\/)/, /^react-dom($|\/)/, /^@tiptap\//, 'docx', 'mammoth', 'hwp-convert', '@rhwp/core', '@file-viewer/doc'] },
   },
 })
