@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-16
+
 ### Added
 
 - 준비서면 템플릿 `preparatory-brief` — 사건 표시, 피고 주장에 대한 반박, 원고의 추가 주장, 피고가 낸 증거에 대한 의견, 결론, 입증방법(`갑` 호증과 본문 참조), 첨부서류. 「민사소송법」 제272조~제275조의 기재사항을 담고, 설명에 제출 시기(규칙 제69조의3, 기일 7일 전 송달)와 분량(제69조의4, 30쪽 이하)을 적음. 앞 서면의 증거에 이어 번호를 매기려면 **호증 시작**
@@ -158,7 +160,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.1...v0.17.0
 [0.16.1]: https://github.com/hwondev/legal-doc-editor/compare/v0.16.0...v0.16.1
 [0.16.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.15.0...v0.16.0
