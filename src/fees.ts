@@ -73,7 +73,7 @@ const digits = (s = '') => Number(s.replace(/[^\d]/g, '')) || 0
  * 비어 있는 비용·통수 변수를 계산값으로 채움. 직접 입력한 값은 덮어쓰지 않음.
  * - 소장: `소가`(또는 `소송목적의 값`) → 이름이 `인지액`·`송달료`로 시작하는 변수 (소가 3천만원 이하 소액 10회분, 넘으면 15회분)
  * - 지급명령: `청구금액` → `독촉절차 인지대`(소장의 10분의 1)·`독촉절차 송달료`(6회분)·`독촉절차비용`(두 금액 합계)
- * - 첨부서류: `입증방법 통수`(상대방 수 + 1)·`소장 부본 통수`·`답변서 부본 통수`(상대방 수) — 소가 없이도 채움
+ * - 첨부서류: `입증방법 통수`(상대방 수 + 1)·`소장 부본 통수`·`답변서 부본 통수`·`준비서면 부본 통수`(상대방 수) — 소가 없이도 채움
  */
 export function withCourtFees(names: string[], values: Values, opts: CourtFeeOptions = {}): Values {
   const amountOf = (re: RegExp) => digits(values[names.find((n) => re.test(n)) ?? ''])
@@ -121,7 +121,7 @@ export function withCourtFees(names: string[], values: Values, opts: CourtFeeOpt
   if (!opts.electronic) {
     const opponents = Math.max(1, opts.opponents ?? parties - 1)
     fillText(/^입증방법\s*통수/, `${opponents + 1}통`)
-    fillText(/^(소장|답변서)\s*부본\s*통수/, `${opponents}통`) // 답변서 부본은 원고에게 송달 (민사소송법 제256조제3항)
+    fillText(/^(소장|답변서|준비서면)\s*부본\s*통수/, `${opponents}통`) // 답변서·준비서면 부본도 상대방에게 송달 (민사소송법 제256조제3항·제273조)
   }
   return filled ? out : values
 }
