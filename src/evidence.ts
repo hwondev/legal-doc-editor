@@ -6,7 +6,7 @@ import { EVIDENCE_REF_GROUP, EVIDENCE_SKIP, evidenceRefPieces, refText, type Ref
 const newId = () => Math.random().toString(36).slice(2, 10)
 
 // 문서 순서대로 호증 문단을 돌며 당사자와 현재 번호를 넘김 (io.ts evidenceNumbers·flatten과 같은 규칙)
-function eachEvidence(doc: PMNode, fn: (node: PMNode, pos: number, party: string, n: number) => void) {
+export function eachEvidence(doc: PMNode, fn: (node: PMNode, pos: number, party: string, n: number) => void) {
   const counts: Record<string, number> = {}
   doc.descendants((node, pos) => {
     if (EVIDENCE_SKIP.includes(node.type.name)) return false

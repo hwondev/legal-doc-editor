@@ -1,4 +1,7 @@
 import { Extension } from '@tiptap/core'
+import type { Node as PMNode } from '@tiptap/pm/model'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import { eachEvidence } from './evidence'
 
 declare module '@tiptap/core' {
   interface Commands<ReturnType> {
@@ -15,6 +18,15 @@ declare module '@tiptap/core' {
 
 const MAX = 4
 const PARTIES = ['갑', '을', '병']
+
+// 당사자별 첫 호증 문단
+function firstEvidence(doc: PMNode) {
+  const first = new Map<string, { node: PMNode; pos: number }>()
+  eachEvidence(doc, (node, pos, party) => {
+    if (!first.has(party)) first.set(party, { node, pos })
+  })
+  return first
+}
 
 // 소장식 번호 문단(1. → 가. → (1) → (가))과 입증방법 호증(갑 제N호증). 번호 글자는 저장하지 않고 legal.css 카운터가 그림
 // → 문단을 넣고 빼면 번호가 알아서 다시 매겨짐
@@ -71,6 +83,49 @@ export const Numbering = Extension.create({
         ({ commands }) =>
           commands.updateAttributes('paragraph', { evidenceStart: n && n >= 1 ? Math.floor(n) : null }),
     }
+  },
+
+  // 호증 시작 번호 유지: 당사자의 첫 호증 문단이 지워지거나(잘라내기·Backspace로 합치기 포함) 호증에서 풀리거나 위에 새 호증이 생기면
+  // 시작 번호를 지금 첫 호증 문단으로 옮김 → 준비서면의 "갑 제5호증"부터가 1로 돌아가지 않음
+  // ponytail: 첫 호증 문단의 시작 번호만 챙김. 목록 중간의 시작 번호나, 잘라낸 첫 호증을 다른 곳에 붙인 경우는 그대로
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('evidenceStart'),
+        appendTransaction: (trs, oldState, newState) => {
+          if (!trs.some((t) => t.docChanged)) return null
+          const tr = newState.tr
+          const newFirst = firstEvidence(newState.doc)
+          // 옛 문서 위치 → 새 문서 위치, 그 자리 문단이 지워졌으면 null
+          const map = (pos: number) => {
+            for (const t of trs) {
+              const r = t.mapping.mapResult(pos)
+              if (r.deleted) return null
+              pos = r.pos
+            }
+            return pos
+          }
+          for (const [party, old] of firstEvidence(oldState.doc)) {
+            const start = old.node.attrs.evidenceStart
+            const cur = newFirst.get(party)
+            if (!start || !cur || cur.node.attrs.evidenceStart) continue
+            const was = map(old.pos)
+            if (was === cur.pos) continue // 같은 문단에서 시작 번호를 직접 지운 경우
+            if (was === null) {
+              // 옛 첫 문단이 지워졌으면 지금 첫 문단이 원래 있던 호증일 때만 (파일 열기처럼 문서를 통째로 바꾼 경우 제외)
+              let existed = false
+              eachEvidence(oldState.doc, (_node, pos, p) => {
+                if (p === party && map(pos) === cur.pos) existed = true
+              })
+              if (!existed) continue
+            }
+            tr.setNodeAttribute(cur.pos, 'evidenceStart', start)
+            if (was !== null && newState.doc.nodeAt(was)?.attrs.evidenceStart === start) tr.setNodeAttribute(was, 'evidenceStart', null)
+          }
+          return tr.steps.length ? tr : null
+        },
+      }),
+    ]
   },
 
   addKeyboardShortcuts() {
