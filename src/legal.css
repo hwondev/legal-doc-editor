@@ -96,9 +96,33 @@
 .le-var--empty { border: 1px dashed var(--le-brass); border-radius: 3px; padding: 0 4px; background: var(--le-brass-soft); color: var(--le-brass-ink); font-family: var(--le-sans); font-size: 0.82em; }
 
 /* ── 에디터 화면 ───────────────────────── */
-.le-root { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; background: var(--le-desk); color: var(--le-ink); font: 14px/1.55 var(--le-sans); }
+.le-root { display: grid; grid-template-columns: 220px minmax(0, 1fr) 300px; gap: 20px; padding: 20px; background: var(--le-desk); color: var(--le-ink); font: 14px/1.55 var(--le-sans); }
 .le-main { min-width: 0; display: grid; gap: 14px; align-content: start; }
-.le-main .legal-doc { box-shadow: 0 1px 0 var(--le-line), 0 12px 32px rgba(20, 30, 50, 0.1); min-height: 900px; }
+/*
+ * 편집 화면의 종이 = A4(210mm) + 인쇄 여백 20mm. 한 쪽 본문 높이 257mm마다 쪽이 나뉠 자리를 옅은 선으로 표시
+ * 선은 본문 영역(content-box) 안에만 그려서 첫 쪽 위 여백에는 생기지 않음. 인쇄는 @page로 같은 여백을 씀
+ * ponytail: 화면과 인쇄의 줄바꿈이 같다는 가정의 "예상" 위치 — 글꼴이 다르게 불러와지면 조금 어긋날 수 있음
+ */
+.le-main .legal-doc {
+  box-sizing: border-box; width: 210mm; max-width: 100%; min-height: 297mm; padding: 20mm;
+  box-shadow: 0 1px 0 var(--le-line), 0 12px 32px rgba(20, 30, 50, 0.1);
+  background-color: var(--le-paper);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 calc(257mm - 1px), var(--le-line) calc(257mm - 1px) 257mm);
+  background-size: 100% 257mm; background-position: 0 20mm; background-clip: content-box;
+}
+.le-main .legal-doc > * { scroll-margin-top: 140px; } /* 목차로 옮길 때 붙어 있는 도구 모음에 가리지 않게 */
+
+/* 문서 구조 목차 */
+.le-outline { align-self: start; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; display: grid; gap: 8px; padding: 14px 12px; background: var(--le-surface); border: 1px solid var(--le-line); border-radius: 12px; font-size: 13px; }
+.le-outline h2 { margin: 0 4px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--le-muted); }
+.le-outline ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+.le-outline button { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px; border: 0; border-radius: 6px; background: none; text-align: left; }
+.le-outline button:hover { background: var(--le-surface-2); }
+.le-outline button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.le-outline li[data-level='1'] button { font-weight: 600; }
+.le-outline li[data-level='2'] button { padding-left: 16px; font-size: 12.5px; }
+.le-outline em { flex: none; min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--le-brass-soft); color: var(--le-brass-ink); font-style: normal; font-size: 11.5px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
+.le-outline-pages { margin: 4px 4px 0; padding-top: 8px; border-top: 1px solid var(--le-line-soft); color: var(--le-muted); font-size: 12px; }
 .le-root :focus-visible { outline: 2px solid var(--le-accent); outline-offset: 2px; }
 .le-root button { font: inherit; color: inherit; cursor: pointer; }
 .le-root button:disabled { cursor: default; opacity: 0.5; }
@@ -107,7 +131,7 @@
 .le-root input::placeholder { color: #9aa0a8; }
 
 /* 도구 모음 */
-.le-toolbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; max-width: 760px; width: 100%; margin: 0 auto; padding: 5px; background: var(--le-surface); border: 1px solid var(--le-line); border-radius: 10px; box-shadow: 0 2px 8px rgba(20, 30, 50, 0.06); }
+.le-toolbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; box-sizing: border-box; max-width: 210mm; width: 100%; margin: 0 auto; padding: 5px; background: var(--le-surface); border: 1px solid var(--le-line); border-radius: 10px; box-shadow: 0 2px 8px rgba(20, 30, 50, 0.06); }
 .le-toolbar button, .le-toolbar .le-btn { border: 0; background: none; border-radius: 6px; padding: 5px 9px; white-space: nowrap; }
 .le-toolbar button:hover, .le-toolbar .le-btn:hover { background: var(--le-surface-2); }
 .le-toolbar button[aria-pressed='true'] { background: var(--le-accent); color: var(--le-accent-ink); }
@@ -138,6 +162,27 @@
 .le-panel label { display: grid; gap: 4px; margin-bottom: 10px; color: var(--le-muted); font-size: 12.5px; }
 .le-hint { margin: 0; color: var(--le-muted); font-size: 12.5px; }
 
+/* 입력값 묶음 · 자동 계산 · 진행률 */
+.le-group { margin: 0 0 6px; padding: 0; border: 0; min-width: 0; }
+.le-group-title { margin: 0 0 8px; padding: 0; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--le-brass-ink); }
+.le-progress { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; margin-bottom: 14px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.le-progress-bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--le-line-soft); overflow: hidden; }
+.le-progress-bar i { display: block; height: 100%; background: var(--le-brass); transition: width 0.2s; }
+.le-progress button { border: 1px solid var(--le-line); border-radius: 7px; padding: 5px 10px; background: var(--le-surface); color: var(--le-accent); font-weight: 600; }
+.le-progress button:hover:not(:disabled) { border-color: var(--le-accent); }
+.le-auto { display: grid; gap: 6px; margin: 4px 0 8px; padding: 10px 12px; background: var(--le-surface-2); border: 1px solid var(--le-line-soft); border-radius: 9px; }
+.le-auto .le-group-title { margin-bottom: 2px; }
+.le-auto-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.le-auto-row span { color: var(--le-muted); }
+.le-auto-row small { color: var(--le-muted); font-size: 11.5px; }
+.le-auto button { border: 0; background: none; padding: 2px 4px; color: var(--le-link); font-size: 12px; }
+.le-auto label { margin-bottom: 4px; }
+.le-auto-head { display: flex; justify-content: space-between; align-items: center; }
+.le-auto .le-hint { font-size: 11.5px; }
+/* 다음 빈칸으로 고른 칸 */
+.legal-doc .le-var.ProseMirror-selectednode { outline: 2px solid var(--le-brass); outline-offset: 2px; border-radius: 3px; }
+@media (prefers-reduced-motion: reduce) { .le-progress-bar i { transition: none; } }
+
 /* 판례 검색 (searchCases) */
 .le-cases-bar { display: flex; gap: 6px; margin-bottom: 8px; }
 .le-cases-bar input { flex: 1; }
@@ -162,13 +207,19 @@
 .le-clause-group { margin-top: 8px; padding: 0 9px; color: var(--le-brass-ink); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; }
 .le-clause-group:first-child { margin-top: 0; }
 
+@media (max-width: 1280px) {
+  .le-root { grid-template-columns: minmax(0, 1fr) 300px; }
+  .le-outline { display: none; }
+}
 @media (max-width: 800px) {
   .le-root { grid-template-columns: 1fr; padding: 12px; }
   .le-panel { position: static; max-height: none; }
-  .legal-doc { padding: 32px 24px; }
+  .legal-doc, .le-main .legal-doc { padding: 32px 24px; min-height: 0; background-image: none; }
 }
 
 @media print {
+  @page { size: A4; margin: 20mm; }
+  .le-printing .legal-doc { background: none; min-height: 0; }
   .le-printing body * { visibility: hidden; }
   .le-printing .legal-doc, .le-printing .legal-doc * { visibility: visible; }
   .le-printing .legal-doc { position: absolute; top: 0; left: 0; width: 100%; max-width: none; padding: 0; box-shadow: none; }

@@ -7,6 +7,8 @@ export interface Doc {
   html: string
   values: Values
   updatedAt: number
+  /** 템플릿으로 시작했으면 그 id — 질문 흐름(guide.tsx)을 고를 때 씀 */
+  templateId?: string
 }
 
 const KEY = 'legal-doc-editor:docs'
@@ -52,4 +54,11 @@ export function removeDoc(id: string): boolean {
   return persist()
 }
 
-export const newDoc = (title: string, html: string): Doc => ({ id: crypto.randomUUID().slice(0, 8), title, html, values: {}, updatedAt: Date.now() })
+export const newDoc = (title: string, html: string, templateId?: string): Doc => ({
+  id: crypto.randomUUID().slice(0, 8),
+  title,
+  html,
+  values: {},
+  updatedAt: Date.now(),
+  ...(templateId && { templateId }),
+})

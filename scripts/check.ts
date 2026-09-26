@@ -10,6 +10,7 @@ import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
 import { templates } from '../src/templates.ts'
 import { clauses, groupClauses } from '../src/clauses.ts'
 import { precToCase } from '../api/_prec.js'
+import { groupFields, isAutoFilledName } from '../src/fields.ts'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -380,5 +381,23 @@ assert.equal(groupClauses(clauses).flatMap(([, items]) => items).length, clauses
 assert.deepEqual(ids(groupClauses(clauses, { category: '책임' })), [['책임', ['damages', 'force-majeure']]])
 assert.deepEqual(ids(groupClauses(clauses, { query: '해지' })), [['종료', ['termination']]])
 assert.deepEqual(groupClauses(clauses, { category: '분쟁', query: '해지' }), [])
+
+// 입력값 묶음: 소장(대여금)의 빈칸 18개가 당사자·금액·날짜·그 밖·자동 계산으로
+const loanNames = [...new Set([...templates.find((t) => t.id === 'complaint-loan')!.html.matchAll(/\{\{([^{}]+)\}\}/g)].map((m) => m[1]))]
+assert.deepEqual(groupFields(loanNames, { auto: true }), [
+  ['당사자', ['원고 이름', '원고 주소', '원고 연락처', '피고 이름', '피고 주소', '피고 연락처', '당사자 관계']],
+  ['금액', ['소가', '청구금액']],
+  ['날짜', ['변제기 다음 날', '대여일', '변제기', '작성일']],
+  ['그 밖의 내용', ['관할 법원']],
+  ['자동 계산', ['인지액', '송달료', '입증방법 통수', '소장 부본 통수']],
+])
+assert.equal(groupFields(['인지액'], { auto: false })[0][0], '그 밖의 내용') // autoFees가 꺼져 있으면 직접 입력
+assert.equal(groupFields(['채권자 생년월일'])[0][0], '당사자') // 당사자로 시작하면 날짜보다 먼저
+// 자동 계산으로 묶는 이름은 withCourtFees가 실제로 채우는 이름과 같아야 함
+const autoNames = ['인지액', '송달료', '독촉절차 인지대', '독촉절차 송달료', '독촉절차비용', '입증방법 통수', '소장 부본 통수', '답변서 부본 통수', '준비서면 부본 통수']
+// withCourtFees는 이름 목록에서 소가·청구금액을 찾아 금액을 읽으므로 그 이름도 함께 넘김
+const filledNames = Object.keys(withCourtFees(['소가', '청구금액', ...autoNames], { 소가: '12,000,000원', 청구금액: '3,000,000원' }, { unitFee: 5_500 })).filter((n) => autoNames.includes(n))
+assert.deepEqual(filledNames.sort(), [...autoNames].sort())
+assert.ok(autoNames.every(isAutoFilledName) && !isAutoFilledName('소가') && !isAutoFilledName('청구금액'))
 
 console.log('ok')

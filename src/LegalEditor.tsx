@@ -9,6 +9,7 @@ import { CitationLink, formatCaseCitation, type CaseResult } from './citation'
 import { groupClauses, type Clause } from './clauses'
 import type { Template } from './templates'
 import { withCourtFees, type CourtFeeOptions } from './fees'
+import { groupFields, isAutoFilledName } from './fields'
 import { formatAmount, parseAmount } from './amount'
 import { fromFile, toDocx, toHwp, toHwpx } from './io'
 import './legal.css'
@@ -65,6 +66,76 @@ const readActive = (e: Editor) => ({
   list: e.isActive('orderedList'),
   bold: e.isActive('bold'),
 })
+
+// 문서 구조 목차: 제목·소제목·조와 그 아래 비어 있는 빈칸 수 (pos는 제목 문단 위치)
+type OutlineItem = { pos: number; level: number; text: string; blanks: number }
+const outlineOf = (doc: Editor['state']['doc'], filled: Values): OutlineItem[] => {
+  const items: OutlineItem[] = []
+  let article = 0
+  doc.forEach((node, pos) => {
+    if (node.type.name === 'heading') {
+      const level: number = node.attrs.level
+      const text = node.textContent.trim()
+      items.push({ pos, level, text: level === 2 ? `제${++article}조 ${text}` : text || '(제목 없음)', blanks: 0 })
+    }
+    const last = items[items.length - 1]
+    if (!last) return
+    node.descendants((n) => {
+      if (n.type.name === 'variable' && !filled[n.attrs.name]?.trim()) last.blanks++
+    })
+  })
+  return items
+}
+
+// A4 한 쪽의 본문 높이: 297mm − 위아래 여백 20mm씩 (legal.css의 A4 종이·@page와 같은 값)
+const PAGE_BODY_PX = (257 * 96) / 25.4
+const PAGE_MARGIN_PX = (20 * 96) / 25.4
+
+function Outline({ editor, filled }: { editor: Editor; filled: Values }) {
+  const tracked = useEditorState({ editor, selector: ({ editor: e }) => e && outlineOf(e.state.doc, filled) })
+  const items = tracked ?? outlineOf(editor.state.doc, filled)
+  const [pages, setPages] = useState(1)
+  // 목차가 문서보다 먼저 그려져서 처음엔 편집 화면이 아직 페이지에 붙어 있지 않음 → 붙은 뒤에만 잼
+  const measure = () => {
+    const el = editor.isDestroyed ? null : editor.view.dom
+    if (el?.isConnected) setPages(Math.max(1, Math.ceil((el.scrollHeight - 2 * PAGE_MARGIN_PX) / PAGE_BODY_PX)))
+  }
+  useEffect(measure) // 입력값이 바뀌어 다시 그려질 때 (빈칸 글자 길이로 줄 수가 바뀜)
+  useEffect(() => {
+    const frame = requestAnimationFrame(measure)
+    editor.on('update', measure)
+    window.addEventListener('resize', measure)
+    return () => {
+      cancelAnimationFrame(frame)
+      editor.off('update', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [editor])
+  const go = (pos: number) => {
+    editor.chain().focus().setTextSelection(pos + 1).run()
+    ;(editor.view.nodeDOM(pos) as HTMLElement | null)?.scrollIntoView({ block: 'start' })
+  }
+  return (
+    <nav className="le-outline" aria-label="문서 구조">
+      <h2>문서 구조</h2>
+      {items.length === 0 ? (
+        <p className="le-hint">제목·소제목·조를 넣으면 목차가 생겨요.</p>
+      ) : (
+        <ol>
+          {items.map((item) => (
+            <li key={item.pos} data-level={item.level}>
+              <button type="button" onClick={() => go(item.pos)} title={item.blanks ? `빈칸 ${item.blanks}개 남음` : undefined}>
+                <span>{item.text}</span>
+                {item.blanks > 0 && <em aria-label={`빈칸 ${item.blanks}개`}>{item.blanks}</em>}
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="le-outline-pages">A4 예상 {pages}쪽</p>
+    </nav>
+  )
+}
 
 // 도구 모음의 펼침 메뉴 (더보기·내보내기). Esc·바깥 클릭으로 닫고 ↑↓로 항목 이동, 닫으면 여는 버튼으로 초점이 돌아감
 function Menu({ label, title, className, align = 'left', children }: { label: ReactNode; title?: string; className?: string; align?: 'left' | 'right'; children: (close: () => void) => ReactNode }) {
@@ -199,6 +270,32 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
     onValuesChange?.(next)
   }
 
+  // 빈칸 진행률 · 다음 빈칸 (autoFees가 채울 칸은 소가 등을 넣으면 채워지므로 건너뜀)
+  const panel = useRef<HTMLElement>(null)
+  const [editingAuto, setEditingAuto] = useState('') // 자동 계산 값을 직접 고치는 중인 이름
+  const isAuto = (name: string) => !!autoFees && isAutoFilledName(name)
+  const filledCount = names.filter((n) => shown[n]?.trim()).length
+  const nextBlank = () => {
+    if (!editor) return
+    const blanks: { pos: number; name: string }[] = []
+    editor.state.doc.descendants((n, pos) => {
+      if (n.type.name === 'variable' && !shown[n.attrs.name]?.trim() && !isAuto(n.attrs.name)) blanks.push({ pos, name: n.attrs.name })
+    })
+    if (blanks.length === 0) return
+    const next = blanks.find((b) => b.pos > editor.state.selection.from) ?? blanks[0] // 끝에서 처음으로
+    editor.commands.setNodeSelection(next.pos)
+    ;(editor.view.nodeDOM(next.pos) as HTMLElement | null)?.scrollIntoView({ block: 'center' })
+    panel.current?.querySelector<HTMLInputElement>(`input[data-field="${CSS.escape(next.name)}"]`)?.focus()
+  }
+  const onFieldKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+      e.preventDefault()
+      nextBlank()
+    }
+  }
+  const autoHint = (name: string) =>
+    /^독촉절차/.test(name) ? '청구금액을 넣으면 계산돼요' : /통수/.test(name) ? '전자소송은 통수를 적지 않아요' : '소가를 넣으면 계산돼요'
+
   const insertVar = () => {
     const name = window.prompt('빈칸 이름 (예: 피고 이름, 계약일) — 오른쪽 입력값에 이 이름으로 칸이 생겨요')?.replace(/[{}<>"]/g, '').trim()
     if (name) editor?.chain().focus().insertContent({ type: 'variable', attrs: { name } }).run()
@@ -272,6 +369,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
 
   return (
     <div className="le-root">
+      {editor && <Outline editor={editor} filled={shown} />}
       <div className="le-main">
         {editable && editor && active && (
           <div className="le-toolbar" role="toolbar" aria-label="서식">
@@ -367,17 +465,64 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
         )}
         <EditorContent editor={editor} />
       </div>
-      <aside className="le-panel">
+      <aside className="le-panel" ref={panel}>
         {/* 섹션마다 접고 펼 수 있음. open은 처음 값만 주고 이후엔 사용자가 바꾼 상태를 React가 건드리지 않음 */}
         <details open>
           <summary>입력값</summary>
-          {names.length === 0 && <p className="le-hint">본문에 {'{{당사자}}'}처럼 입력하면 변수가 생겨요.</p>}
-          {names.map((n) => (
-            <label key={n}>
-              {n}
-              <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
-            </label>
-          ))}
+          {names.length === 0 ? (
+            <p className="le-hint">본문에 {'{{당사자}}'}처럼 입력하면 빈칸이 생겨요.</p>
+          ) : (
+            <div className="le-progress">
+              <div className="le-progress-bar" role="progressbar" aria-label="빈칸 채움" aria-valuemin={0} aria-valuemax={names.length} aria-valuenow={filledCount}>
+                <i style={{ width: `${(filledCount / names.length) * 100}%` }} />
+              </div>
+              <span>
+                {filledCount} / {names.length} 채움
+              </span>
+              <button type="button" disabled={filledCount === names.length} title="다음 빈칸으로 — 입력칸에서 Enter를 눌러도 돼요" onClick={nextBlank}>
+                다음 빈칸 ⏎
+              </button>
+            </div>
+          )}
+          {groupFields(names, { auto: !!autoFees }).map(([group, list]) =>
+            group === '자동 계산' ? (
+              <div className="le-auto" key={group}>
+                <p className="le-group-title">자동 계산</p>
+                {list.map((n) =>
+                  values[n] || editingAuto === n ? (
+                    <label key={n}>
+                      <span className="le-auto-head">
+                        {n}
+                        <button type="button" onClick={() => (setEditingAuto(''), setValue(n, ''))}>
+                          자동으로
+                        </button>
+                      </span>
+                      <input data-field={n} autoFocus={editingAuto === n} value={values[n] ?? ''} placeholder={shown[n]} onChange={(e) => setValue(n, e.target.value)} onKeyDown={onFieldKey} />
+                    </label>
+                  ) : (
+                    <div className="le-auto-row" key={n}>
+                      <span>{n}</span>
+                      {shown[n] ? <b>{shown[n]}</b> : <small>{autoHint(n)}</small>}
+                      <button type="button" onClick={() => setEditingAuto(n)}>
+                        고치기
+                      </button>
+                    </div>
+                  ),
+                )}
+                <p className="le-hint">참고용 계산이에요. 바탕이 되는 값을 바꾸면 다시 계산돼요.</p>
+              </div>
+            ) : (
+              <fieldset className="le-group" key={group}>
+                <legend className="le-group-title">{group}</legend>
+                {list.map((n) => (
+                  <label key={n}>
+                    {n}
+                    <input data-field={n} value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} onKeyDown={onFieldKey} />
+                  </label>
+                ))}
+              </fieldset>
+            ),
+          )}
         </details>
         {templates && (
           <Library
