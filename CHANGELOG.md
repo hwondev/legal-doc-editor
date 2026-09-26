@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.24.1] - 2026-09-27
+
 ### Fixed
 
 - 판례 검색 결과로 넣은 인용이 어긋나던 문제 — 대법원 외 출처(국세법령정보시스템·근로복지공단산재판례) 자료는 법원명·판결유형이 비어 있고 사건번호가 `서울동부지방법원-2025-나-20644`처럼 법원과 붙어 옴. 사건번호에서 법원명과 번호(`2025나20644`)를 나누고, `판결 : 환송`은 판결로, 대법원 외 출처는 "출처: …"로 표시. 판결유형이 없으면 판결로 넣되 넣기 전에 "판결·결정 구분이 없어 판결로 넣어요 — 넣은 뒤 확인하세요"라고 알림. 사이트 함수와 예제 서버가 같은 규칙(`api/_prec.js`)을 씀 (#63)
@@ -230,7 +232,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.24.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.24.1...HEAD
+[0.24.1]: https://github.com/hwondev/legal-doc-editor/compare/v0.24.0...v0.24.1
 [0.24.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.21.0...v0.22.0
