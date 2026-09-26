@@ -6,6 +6,8 @@
 //
 // API 가이드(판례 목록 조회): https://open.law.go.kr/LSO/openApi/guideResult.do?htmlName=precListGuide
 import { createServer } from 'node:http'
+// 응답 한 건을 인용에 맞는 모양으로 정리하는 규칙 (사이트의 Vercel 함수와 같은 파일)
+import { precToCase } from '../../api/_prec.js'
 
 const OC = process.env.LAW_GO_KR_OC
 const PORT = Number(process.env.PORT ?? 8787)
@@ -36,19 +38,7 @@ createServer(async (req, res) => {
     const root = data?.PrecSearch
     if (!root) return send(res, 502, { error: '예상과 다른 응답 구조', keys: Object.keys(data ?? {}) })
     const list = [root.prec ?? []].flat() // 결과가 1건이면 배열이 아니라 객체로 올 수 있음
-    send(
-      res,
-      200,
-      list.map((p) => ({
-        court: p.법원명,
-        date: p.선고일자,
-        caseNo: p.사건번호,
-        title: p.사건명,
-        kind: p.판결유형,
-        // 판례상세링크에는 인증값이 들어 있어 쓰지 않고, 공개 판례 검색 주소로 연결
-        url: `https://www.law.go.kr/LSW/precSc.do?query=${encodeURIComponent(p.사건번호)}`,
-      })),
-    )
+    send(res, 200, list.map(precToCase))
   } catch (err) {
     console.error('국가법령정보 API 호출 실패:', err.message)
     send(res, 502, { error: '국가법령정보 API 호출 실패' }) // 인증값이 들어간 주소는 돌려주지 않음

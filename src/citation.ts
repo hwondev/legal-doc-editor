@@ -73,12 +73,13 @@ export interface CaseResult {
   url: string
 }
 
-/** 검색 결과 → 본문 인용 문구: "대법원 2016. 4. 28. 선고 2015다12345 판결", 결정은 "대법원 2020. 1. 9.자 2019마123 결정" */
+/** 검색 결과 → 본문 인용 문구: "대법원 2016. 4. 28. 선고 2015다12345 판결", 결정은 "대법원 2020. 1. 9.자 2019마123 결정". 법원명이 없으면 날짜부터 */
 export function formatCaseCitation({ court, date, caseNo, kind = '' }: CaseResult): string {
   const m = date.match(/(\d{4})\D*(\d{1,2})\D*(\d{1,2})/)
   const day = m ? `${m[1]}. ${+m[2]}. ${+m[3]}.` : date
   const k = /결정/.test(kind) ? '결정' : /명령/.test(kind) ? '명령' : '판결'
-  return k === '판결' ? `${court} ${day} 선고 ${caseNo} 판결` : `${court} ${day}자 ${caseNo} ${k}`
+  const at = court?.trim() ? `${court.trim()} ${day}` : day
+  return k === '판결' ? `${at} 선고 ${caseNo} 판결` : `${at}자 ${caseNo} ${k}`
 }
 
 const key = new PluginKey<DecorationSet>('citation')

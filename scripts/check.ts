@@ -9,6 +9,7 @@ import { calcPaymentOrderStampFee, calcServiceFee, calcStampFee, SERVICE_UNIT_FE
 import { formatAmount, parseAmount, toKoreanAmount } from '../src/amount.ts'
 import { templates } from '../src/templates.ts'
 import { clauses, groupClauses } from '../src/clauses.ts'
+import { precToCase } from '../api/_prec.js'
 
 const t = (text: string) => ({ type: 'text', text })
 const p = (...content: object[]) => ({ type: 'paragraph', content })
@@ -344,6 +345,24 @@ const decision = { ...found, date: '2020.01.09', caseNo: '2019마123', kind: '�
 assert.equal(formatCaseCitation(decision), '대법원 2020. 1. 9.자 2019마123 결정')
 assert.deepEqual(cites(formatCaseCitation(found)), ['case:대법원 2016. 4. 28. 선고 2015다12345 판결'])
 assert.deepEqual(cites(formatCaseCitation(decision)), ['case:대법원 2020. 1. 9.자 2019마123 결정'])
+// 법원명이 없으면 날짜부터 (앞에 빈칸 없이), 사건번호는 그대로 인용으로 인식
+assert.equal(formatCaseCitation({ ...found, court: '' }), '2016. 4. 28. 선고 2015다12345 판결')
+assert.deepEqual(cites(formatCaseCitation({ ...found, court: '' })), ['case:2015다12345'])
+
+// 판례 검색 응답 한 건 정리 (api/_prec.js): 운영 응답에서 본 모양들 — 번호는 예시
+const toCase = (p: Record<string, string>) => precToCase(p)
+const joined = toCase({ 사건번호: '서울동부지방법원-2099-나-12345', 법원명: '', 판결유형: '', 선고일자: '2099.07.08', 사건명: '예시', 데이터출처명: '국세법령정보시스템' })
+assert.deepEqual([joined.court, joined.caseNo, joined.kind], ['서울동부지방법원', '2099나12345', undefined])
+assert.equal(joined.summary, '출처: 국세법령정보시스템 · 판결·결정 구분이 없어 판결로 넣어요 — 넣은 뒤 확인하세요')
+assert.equal(formatCaseCitation(joined), '서울동부지방법원 2099. 7. 8. 선고 2099나12345 판결')
+assert.deepEqual(cites(formatCaseCitation(joined)), ['case:서울동부지방법원 2099. 7. 8. 선고 2099나12345 판결'])
+assert.equal(joined.url, `https://www.law.go.kr/LSW/precSc.do?query=${encodeURIComponent('2099나12345')}`)
+assert.deepEqual([toCase({ 사건번호: '서울고등법원2099나200524' }).court, toCase({ 사건번호: '서울고등법원2099나200524' }).caseNo], ['서울고등법원', '2099나200524'])
+assert.deepEqual([toCase({ 사건번호: '상주지원-2099-가단-5844' }).court, toCase({ 사건번호: '상주지원-2099-가단-5844' }).caseNo], ['상주지원', '2099가단5844'])
+const plainCase = toCase({ 사건번호: '2099다290355', 법원명: '대법원', 판결유형: '판결 : 환송', 선고일자: '20990115', 데이터출처명: '대법원' })
+assert.deepEqual([plainCase.court, plainCase.caseNo, plainCase.kind, plainCase.summary], ['대법원', '2099다290355', '판결', undefined])
+assert.equal(toCase({ 사건번호: '2099마123', 법원명: '대법원', 판결유형: '결정' }).kind, '결정')
+assert.equal(toCase({ 사건번호: '2099가합3511', 판결유형: '판결' }).summary, '법원명이 없어요')
 
 // 조항 라이브러리: id 중복 없음, 조 하나로 시작, 조 번호 숫자(자동 번호와 겹침)·개인정보 형식 없음
 assert.equal(new Set(clauses.map((c) => c.id)).size, clauses.length)
