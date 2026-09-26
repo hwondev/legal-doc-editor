@@ -5,6 +5,8 @@
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-09-27
+
 ### Changed
 
 - 리뉴얼 1단계 — 디자인 체계: 화면 색·글꼴·간격을 CSS 변수(`--le-*`)로 정리하고 새 모양으로 바꿈. 남색(주요 동작)·황동(빈칸·진행)·책상색 바탕 위의 흰 종이, 문서 본문 명조(Noto Serif KR)·화면 고딕(IBM Plex Sans KR). 채운 빈칸은 황동 밑줄, 빈 칸은 점선 칸. 쓰는 쪽에서 변수를 덮어써 색·글꼴을 바꿀 수 있음 (#57)
@@ -223,7 +225,8 @@
 - 문단으로만 된 문서를 불러올 때 구조로 정리 — 원문 번호와 자동 번호가 같을 때만 변환해서 글자가 바뀌지 않음
 - API: `fillTemplate`, `toPlainHtml`, `toDocx`, `toHwpx`, `fromFile`, `normalizeLegalHtml`, `Variable`, `Numbering`
 
-[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.23.0...HEAD
+[Unreleased]: https://github.com/hwondev/legal-doc-editor/compare/v0.24.0...HEAD
+[0.24.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.23.0...v0.24.0
 [0.23.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.22.0...v0.23.0
 [0.22.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.21.0...v0.22.0
 [0.21.0]: https://github.com/hwondev/legal-doc-editor/compare/v0.20.0...v0.21.0
