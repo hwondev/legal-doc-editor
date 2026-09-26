@@ -162,6 +162,27 @@
 .le-panel label { display: grid; gap: 4px; margin-bottom: 10px; color: var(--le-muted); font-size: 12.5px; }
 .le-hint { margin: 0; color: var(--le-muted); font-size: 12.5px; }
 
+/* 입력값 묶음 · 자동 계산 · 진행률 */
+.le-group { margin: 0 0 6px; padding: 0; border: 0; min-width: 0; }
+.le-group-title { margin: 0 0 8px; padding: 0; font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; color: var(--le-brass-ink); }
+.le-progress { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 10px; margin-bottom: 14px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.le-progress-bar { grid-column: 1 / -1; height: 6px; border-radius: 3px; background: var(--le-line-soft); overflow: hidden; }
+.le-progress-bar i { display: block; height: 100%; background: var(--le-brass); transition: width 0.2s; }
+.le-progress button { border: 1px solid var(--le-line); border-radius: 7px; padding: 5px 10px; background: var(--le-surface); color: var(--le-accent); font-weight: 600; }
+.le-progress button:hover:not(:disabled) { border-color: var(--le-accent); }
+.le-auto { display: grid; gap: 6px; margin: 4px 0 8px; padding: 10px 12px; background: var(--le-surface-2); border: 1px solid var(--le-line-soft); border-radius: 9px; }
+.le-auto .le-group-title { margin-bottom: 2px; }
+.le-auto-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 8px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.le-auto-row span { color: var(--le-muted); }
+.le-auto-row small { color: var(--le-muted); font-size: 11.5px; }
+.le-auto button { border: 0; background: none; padding: 2px 4px; color: var(--le-link); font-size: 12px; }
+.le-auto label { margin-bottom: 4px; }
+.le-auto-head { display: flex; justify-content: space-between; align-items: center; }
+.le-auto .le-hint { font-size: 11.5px; }
+/* 다음 빈칸으로 고른 칸 */
+.legal-doc .le-var.ProseMirror-selectednode { outline: 2px solid var(--le-brass); outline-offset: 2px; border-radius: 3px; }
+@media (prefers-reduced-motion: reduce) { .le-progress-bar i { transition: none; } }
+
 /* 판례 검색 (searchCases) */
 .le-cases-bar { display: flex; gap: 6px; margin-bottom: 8px; }
 .le-cases-bar input { flex: 1; }

@@ -123,6 +123,12 @@ export default function Page() {
 
 편집 화면의 종이는 A4(210mm)에 인쇄와 같은 여백(20mm)이라, 쪽이 넘어갈 자리가 옅은 선으로 보여요(예상 위치). 왼쪽 **문서 구조** 목차에는 제목·소제목·조와 그 아래 남은 빈칸 수가 나오고, 누르면 그 자리로 옮겨 가요. 맨 아래에 예상 쪽 수가 보여요. 화면이 1280px보다 좁으면 목차는 숨어요.
 
+### 입력값 채우기
+
+오른쪽 **입력값**은 당사자 · 금액 · 날짜 · 그 밖의 내용으로 묶여 있고, 위에 "11 / 18 채움"처럼 진행률이 보여요. **다음 빈칸**을 누르면 커서 뒤의 빈 칸으로 문서를 옮기고 그 입력칸에 초점을 줘요. 입력칸에서 Enter를 누르면 다음 빈칸으로 넘어가서 연달아 채울 수 있어요.
+
+`autoFees`를 켜면 인지액·송달료·첨부 통수는 **자동 계산** 카드에 계산값으로 보여요. 직접 적어야 하면 **고치기**, 다시 계산값으로 돌리려면 **자동으로**를 누르세요.
+
 ### 오른쪽 패널
 
 입력값·템플릿·조항 라이브러리·판례 검색은 오른쪽 패널에 섹션으로 모여 있어요. 섹션 제목을 누르면 접고 펼 수 있고(처음에는 모두 펼쳐져 있어요), 접은 섹션은 문서를 고쳐도 접힌 채로 있어요.
@@ -201,6 +207,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 | --- | --- |
 | `<LegalEditor content values onChange onValuesChange editable autoFees searchCases clauses templates hwpWasmUrl />` | 에디터 컴포넌트 |
 | `clauses` | 기본 조항 목록 `{ id, title, category, html }[]` |
+| `groupFields(names, { auto })` | 빈칸 이름을 당사자·금액·날짜·그 밖의 내용·자동 계산으로 묶음 `[묶음, 이름[]][]` (`fieldGroup(name)`, `isAutoFilledName(name)`도 있음) |
 | `groupClauses(clauses, { category, query })` | 조항·템플릿을 분류별로 묶음 `[분류, 항목[]][]` (분류 선택·검색 적용) — `groupClauses(templates)` |
 | `formatCaseCitation(result)` | 판례 검색 결과 → `대법원 2016. 4. 28. 선고 2015다12345 판결` |
 | `calcStampFee(소가, { electronic })` | 소장 인지액(원) |

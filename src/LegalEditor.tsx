@@ -9,6 +9,7 @@ import { CitationLink, formatCaseCitation, type CaseResult } from './citation'
 import { groupClauses, type Clause } from './clauses'
 import type { Template } from './templates'
 import { withCourtFees, type CourtFeeOptions } from './fees'
+import { groupFields, isAutoFilledName } from './fields'
 import { formatAmount, parseAmount } from './amount'
 import { fromFile, toDocx, toHwp, toHwpx } from './io'
 import './legal.css'
@@ -269,6 +270,32 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
     onValuesChange?.(next)
   }
 
+  // 빈칸 진행률 · 다음 빈칸 (autoFees가 채울 칸은 소가 등을 넣으면 채워지므로 건너뜀)
+  const panel = useRef<HTMLElement>(null)
+  const [editingAuto, setEditingAuto] = useState('') // 자동 계산 값을 직접 고치는 중인 이름
+  const isAuto = (name: string) => !!autoFees && isAutoFilledName(name)
+  const filledCount = names.filter((n) => shown[n]?.trim()).length
+  const nextBlank = () => {
+    if (!editor) return
+    const blanks: { pos: number; name: string }[] = []
+    editor.state.doc.descendants((n, pos) => {
+      if (n.type.name === 'variable' && !shown[n.attrs.name]?.trim() && !isAuto(n.attrs.name)) blanks.push({ pos, name: n.attrs.name })
+    })
+    if (blanks.length === 0) return
+    const next = blanks.find((b) => b.pos > editor.state.selection.from) ?? blanks[0] // 끝에서 처음으로
+    editor.commands.setNodeSelection(next.pos)
+    ;(editor.view.nodeDOM(next.pos) as HTMLElement | null)?.scrollIntoView({ block: 'center' })
+    panel.current?.querySelector<HTMLInputElement>(`input[data-field="${CSS.escape(next.name)}"]`)?.focus()
+  }
+  const onFieldKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+      e.preventDefault()
+      nextBlank()
+    }
+  }
+  const autoHint = (name: string) =>
+    /^독촉절차/.test(name) ? '청구금액을 넣으면 계산돼요' : /통수/.test(name) ? '전자소송은 통수를 적지 않아요' : '소가를 넣으면 계산돼요'
+
   const insertVar = () => {
     const name = window.prompt('빈칸 이름 (예: 피고 이름, 계약일) — 오른쪽 입력값에 이 이름으로 칸이 생겨요')?.replace(/[{}<>"]/g, '').trim()
     if (name) editor?.chain().focus().insertContent({ type: 'variable', attrs: { name } }).run()
@@ -438,17 +465,64 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
         )}
         <EditorContent editor={editor} />
       </div>
-      <aside className="le-panel">
+      <aside className="le-panel" ref={panel}>
         {/* 섹션마다 접고 펼 수 있음. open은 처음 값만 주고 이후엔 사용자가 바꾼 상태를 React가 건드리지 않음 */}
         <details open>
           <summary>입력값</summary>
-          {names.length === 0 && <p className="le-hint">본문에 {'{{당사자}}'}처럼 입력하면 변수가 생겨요.</p>}
-          {names.map((n) => (
-            <label key={n}>
-              {n}
-              <input value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} />
-            </label>
-          ))}
+          {names.length === 0 ? (
+            <p className="le-hint">본문에 {'{{당사자}}'}처럼 입력하면 빈칸이 생겨요.</p>
+          ) : (
+            <div className="le-progress">
+              <div className="le-progress-bar" role="progressbar" aria-label="빈칸 채움" aria-valuemin={0} aria-valuemax={names.length} aria-valuenow={filledCount}>
+                <i style={{ width: `${(filledCount / names.length) * 100}%` }} />
+              </div>
+              <span>
+                {filledCount} / {names.length} 채움
+              </span>
+              <button type="button" disabled={filledCount === names.length} title="다음 빈칸으로 — 입력칸에서 Enter를 눌러도 돼요" onClick={nextBlank}>
+                다음 빈칸 ⏎
+              </button>
+            </div>
+          )}
+          {groupFields(names, { auto: !!autoFees }).map(([group, list]) =>
+            group === '자동 계산' ? (
+              <div className="le-auto" key={group}>
+                <p className="le-group-title">자동 계산</p>
+                {list.map((n) =>
+                  values[n] || editingAuto === n ? (
+                    <label key={n}>
+                      <span className="le-auto-head">
+                        {n}
+                        <button type="button" onClick={() => (setEditingAuto(''), setValue(n, ''))}>
+                          자동으로
+                        </button>
+                      </span>
+                      <input data-field={n} autoFocus={editingAuto === n} value={values[n] ?? ''} placeholder={shown[n]} onChange={(e) => setValue(n, e.target.value)} onKeyDown={onFieldKey} />
+                    </label>
+                  ) : (
+                    <div className="le-auto-row" key={n}>
+                      <span>{n}</span>
+                      {shown[n] ? <b>{shown[n]}</b> : <small>{autoHint(n)}</small>}
+                      <button type="button" onClick={() => setEditingAuto(n)}>
+                        고치기
+                      </button>
+                    </div>
+                  ),
+                )}
+                <p className="le-hint">참고용 계산이에요. 바탕이 되는 값을 바꾸면 다시 계산돼요.</p>
+              </div>
+            ) : (
+              <fieldset className="le-group" key={group}>
+                <legend className="le-group-title">{group}</legend>
+                {list.map((n) => (
+                  <label key={n}>
+                    {n}
+                    <input data-field={n} value={values[n] ?? ''} placeholder={values[n] ? undefined : shown[n]} onChange={(e) => setValue(n, e.target.value)} onKeyDown={onFieldKey} />
+                  </label>
+                ))}
+              </fieldset>
+            ),
+          )}
         </details>
         {templates && (
           <Library

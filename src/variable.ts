@@ -48,7 +48,9 @@ export const Variable = Node.create<object, VariableStorage>({
       const update = () => {
         const v = this.storage.values[node.attrs.name]
         dom.textContent = v || node.attrs.name
-        dom.className = v ? 'le-var' : 'le-var le-var--empty'
+        // className을 통째로 바꾸면 ProseMirror가 붙인 선택 표시(ProseMirror-selectednode)가 지워짐
+        dom.classList.add('le-var')
+        dom.classList.toggle('le-var--empty', !v)
       }
       update()
       this.storage.views.add(update)
