@@ -236,6 +236,7 @@ import { LegalEditor, clauses } from 'legal-doc-editor'
 2. 프로젝트 **Settings → Environment Variables**에 `LAW_GO_KR_OC`(국가법령정보 공동활용 인증값)를 넣고 다시 배포하세요. 없으면 판례 검색만 "아직 설정되지 않았어요"로 나오고 나머지 기능은 그대로 돼요.
 3. 그다음부터는 `main`에 올라갈 때마다 자동으로 다시 배포돼요.
 
+- 첫 화면에서 서류(소장·답변서·준비서면 등)를 고르거나 파일을 열어 시작해요. 쓰는 동안 이 브라우저에 자동 저장되고, 첫 화면의 **이어 쓰기**에서 다시 열 수 있어요.
 - 문서와 연 파일은 브라우저 안에서만 처리되고 서버에 저장하지 않아요. 서버를 거치는 건 판례 검색어뿐이에요.
 - 같은 검색어 결과는 Vercel CDN에 1시간 캐시해서 API 호출을 줄여요.
 - 로컬에서 사이트 빌드만 확인하려면 `npx vite build --config vite.site.config.ts && npx vite preview --config vite.site.config.ts` (이때는 판례 검색 함수가 돌지 않아요)
