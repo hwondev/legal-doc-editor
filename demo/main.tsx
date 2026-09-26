@@ -1,31 +1,8 @@
+import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { LegalEditor, clauses, templates } from '../src'
-
-const nda = `
-<h1>비밀유지계약서</h1>
-<p>{{갑}}(이하 "갑"이라 한다)과 {{을}}(이하 "을"이라 한다)은 다음과 같이 비밀유지계약을 체결한다.</p>
-<h2>(목적)</h2>
-<p>이 계약은 {{사업명}}과 관련하여 갑이 을에게 제공하는 비밀정보를 보호하는 것을 목적으로 한다.</p>
-<h2>(비밀정보의 범위)</h2>
-<ol>
-  <li><p>"비밀정보"란 갑이 을에게 서면, 구두, 전자적 방법으로 제공하는 기술상·경영상의 정보를 말한다.</p></li>
-  <li><p>다음 각 호의 정보는 비밀정보에서 제외한다.</p>
-    <ol>
-      <li><p>제공받은 시점에 이미 공개된 정보</p></li>
-      <li><p>을이 제3자로부터 적법하게 취득한 정보</p></li>
-    </ol>
-  </li>
-</ol>
-<h2>(계약기간)</h2>
-<p>이 계약의 유효기간은 {{계약일}}부터 {{기간}}으로 한다.</p>
-<p>&nbsp;</p>
-<p style="text-align:center">{{계약일}}</p>
-<p>갑: {{갑}} (인)</p>
-<p>을: {{을}} (인)</p>
-<p>&nbsp;</p>
-<p>※ 인용 표기 예시 — 민법 제750조, 대법원 2016. 4. 28. 선고 2015다12345 판결 (밑줄에 Ctrl·⌘+클릭하면 국가법령정보센터가 열려요)</p>
-<p>※ 소장·답변서·준비서면 등은 오른쪽 패널의 「템플릿」에서 찾아 시작해 보세요.</p>
-`
+import { LegalEditor, clauses, fromFile, groupClauses, templates } from '../src'
+import { getDoc, listDocs, newDoc, removeDoc, saveDoc, type Doc } from './store'
+import './app.css'
 
 // 데모용 가짜 검색 결과 — 실제 판례가 아님(2099년 사건번호). 실제 연결은 examples/law-go-kr-proxy 참고
 const demoSearchCases = async (q: string) => {
@@ -49,11 +26,188 @@ const searchCases = import.meta.env.PROD
     }
   : demoSearchCases
 
-createRoot(document.getElementById('root')!).render(
-  <>
-    <p style={{ margin: 0, padding: '8px 16px', background: '#fff8e1', color: '#5b4400', font: '13px/1.5 system-ui, sans-serif' }}>
-      작성한 문서와 연 파일은 이 브라우저 안에서만 처리되고 서버에 저장하지 않아요(판례 검색어만 검색을 위해 서버를 거쳐요). 법률 자문이 아니니 제출 전에 내용을 꼭 확인하세요.
-    </p>
-    <LegalEditor content={nda} values={{ 갑: '주식회사 가나다' }} autoFees searchCases={searchCases} clauses={clauses} templates={templates} />
-  </>,
+const openDoc = (doc: Doc) => {
+  saveDoc(doc) // 저장이 막혀도 이 탭의 메모리에는 남아서 열 수 있음
+  location.hash = `#/d/${doc.id}`
+}
+
+const ago = (t: number) => {
+  const s = (Date.now() - t) / 1000
+  const rtf = new Intl.RelativeTimeFormat('ko', { numeric: 'auto' })
+  if (s < 60) return '방금'
+  if (s < 3600) return rtf.format(-Math.floor(s / 60), 'minute')
+  if (s < 86400) return rtf.format(-Math.floor(s / 3600), 'hour')
+  return new Date(t).toLocaleDateString('ko-KR')
+}
+
+const Brand = () => (
+  <a href="#" className="app-brand">
+    <span className="app-seal" aria-hidden="true">
+      너
+    </span>
+    너홀로프로
+  </a>
 )
+
+function Home() {
+  const [docs, setDocs] = useState(listDocs)
+
+  const openFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      openDoc(newDoc(file.name.replace(/\.[^.]+$/, ''), await fromFile(file)))
+    } catch (err) {
+      window.alert(`파일을 열 수 없어요: ${(err as Error).message}`)
+    }
+  }
+
+  const remove = (doc: Doc) => {
+    if (!window.confirm(`「${doc.title}」을(를) 지울까요? 이 브라우저에서 지우면 되살릴 수 없어요.`)) return
+    removeDoc(doc.id)
+    setDocs(listDocs())
+  }
+
+  return (
+    <>
+      <header className="app-bar">
+        <Brand />
+        <span className="app-note">작성한 문서는 이 브라우저에만 저장돼요</span>
+      </header>
+      <main className="home">
+        <section className="home-hero">
+          <h1>무엇을 쓰시나요?</h1>
+          <p>서류를 고르면 빈칸이 들어간 초안에서 시작해요. 법률 자문이 아니니 제출 전에 내용을 꼭 확인하세요.</p>
+        </section>
+        <div className="home-grid">
+          <div className="home-templates">
+            {groupClauses(templates).map(([category, items]) => (
+              <section key={category} aria-label={category}>
+                <h2>{category}</h2>
+                <div className="cards">
+                  {items.map((t) => (
+                    <button key={t.id} type="button" className="card" onClick={() => openDoc(newDoc(t.title, t.html))}>
+                      <b>{t.title}</b>
+                      <span>{t.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+          <aside className="home-side">
+            {docs.length > 0 && (
+              <section className="recent" aria-label="이어 쓰기">
+                <h2>이어 쓰기</h2>
+                <ul>
+                  {docs.map((d) => (
+                    <li key={d.id}>
+                      <a href={`#/d/${d.id}`}>
+                        <b>{d.title}</b>
+                        <span>{ago(d.updatedAt)}</span>
+                      </a>
+                      <button type="button" aria-label={`${d.title} 지우기`} onClick={() => remove(d)}>
+                        지우기
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+            <section aria-label="다른 방법으로 시작">
+              <h2>다른 방법으로 시작</h2>
+              <label className="side-btn">
+                파일 열기<small>.hwp · .hwpx · .docx · .doc</small>
+                <input type="file" accept=".docx,.doc,.hwp,.hwpx" hidden onChange={openFile} />
+              </label>
+              <button type="button" className="side-btn" onClick={() => openDoc(newDoc('새 문서', ''))}>
+                빈 문서<small>처음부터 직접 쓰기</small>
+              </button>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </>
+  )
+}
+
+type Status = { state: 'saved' | 'pending' | 'failed'; at: number } | null
+
+// 입력을 멈추고 잠시 뒤 저장. 창을 닫거나 처음으로 돌아갈 때는 남은 것을 바로 저장
+function EditorPage({ doc }: { doc: Doc }) {
+  const latest = useRef(doc)
+  const timer = useRef<number | undefined>(undefined)
+  const [status, setStatus] = useState<Status>(null)
+
+  const flush = () => {
+    if (timer.current === undefined) return
+    clearTimeout(timer.current)
+    timer.current = undefined
+    latest.current = { ...latest.current, updatedAt: Date.now() }
+    setStatus({ state: saveDoc(latest.current) ? 'saved' : 'failed', at: latest.current.updatedAt })
+  }
+  const schedule = (patch: Partial<Doc>) => {
+    latest.current = { ...latest.current, ...patch }
+    setStatus((s) => (s?.state === 'failed' ? s : { state: 'pending', at: Date.now() }))
+    clearTimeout(timer.current)
+    timer.current = window.setTimeout(flush, 400)
+  }
+
+  useEffect(() => {
+    window.addEventListener('pagehide', flush)
+    return () => {
+      window.removeEventListener('pagehide', flush)
+      flush()
+    }
+  }, [])
+
+  const time = status && new Date(status.at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+  return (
+    <div className="app-editor">
+      <header className="app-bar">
+        <Brand />
+        <span className="app-doc-title">{doc.title}</span>
+        <span className={`app-status${status?.state === 'failed' ? ' failed' : ''}`} role="status">
+          {status?.state === 'failed'
+            ? '이 브라우저에 저장하지 못했어요 — 내보내기로 파일을 받아 두세요'
+            : status?.state === 'pending'
+              ? '저장 중…'
+              : status
+                ? `저장됨 ${time} · 이 브라우저에만`
+                : '고치면 이 브라우저에 자동 저장돼요'}
+        </span>
+        <a href="#" className="app-back">
+          처음으로
+        </a>
+      </header>
+      <LegalEditor
+        content={doc.html}
+        values={doc.values}
+        onChange={(html) => schedule({ html })}
+        onValuesChange={(values) => schedule({ values })}
+        autoFees
+        searchCases={searchCases}
+        clauses={clauses}
+      />
+    </div>
+  )
+}
+
+function App() {
+  const [hash, setHash] = useState(location.hash)
+  useEffect(() => {
+    const onHash = () => setHash(location.hash)
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  // 효과 함수는 정리 함수만 돌려줘야 해서 중괄호로 감쌈 (scrollTo가 값을 돌려주는 환경에서 화면 전체가 사라짐)
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [hash])
+  const id = hash.match(/^#\/d\/(.+)$/)?.[1]
+  const doc = id ? getDoc(id) : undefined
+  return doc ? <EditorPage key={doc.id} doc={doc} /> : <Home />
+}
+
+createRoot(document.getElementById('root')!).render(<App />)

@@ -1,0 +1,70 @@
+/* 사이트(너홀로프로) 화면 — 에디터 라이브러리의 legal.css와 같은 색·글꼴 */
+:root {
+  --app-accent: #1f3050;
+  --app-brass-ink: #8c6a2e;
+  --app-desk: #e6e7e2;
+  --app-line: #d4d6cf;
+  --app-ink: #1b2433;
+  --app-muted: #6b7280;
+  --app-surface: #ffffff;
+  --app-surface-2: #f5f5f1;
+  --app-danger: #b42318;
+  --app-ok: #3e6b4c;
+  --app-serif: 'Noto Serif KR', 'Nanum Myeongjo', 'AppleMyungjo', 'Batang', serif;
+  --app-sans: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+}
+body { margin: 0; background: var(--app-desk); color: var(--app-ink); font: 14px/1.55 var(--app-sans); }
+:focus-visible { outline: 2px solid var(--app-accent); outline-offset: 2px; }
+
+/* 머리 막대 */
+.app-bar { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 14px; height: 52px; padding-inline: 20px; background: var(--app-surface); border-bottom: 1px solid var(--app-line); }
+.app-brand { display: flex; align-items: center; gap: 9px; font-weight: 700; color: inherit; text-decoration: none; white-space: nowrap; }
+.app-seal { width: 26px; height: 26px; border-radius: 6px; background: var(--app-accent); color: #e9ddbe; display: grid; place-items: center; font-family: var(--app-serif); font-weight: 900; font-size: 13px; }
+.app-doc-title { color: var(--app-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.app-doc-title::before { content: '/'; margin-right: 14px; color: var(--app-line); }
+.app-status { margin-left: auto; font-size: 12.5px; color: var(--app-ok); white-space: nowrap; }
+.app-status.failed { color: var(--app-danger); white-space: normal; }
+.app-note { margin-left: auto; color: var(--app-muted); font-size: 12.5px; }
+.app-back { color: var(--app-accent); text-decoration: none; font-weight: 600; border: 1px solid var(--app-line); border-radius: 7px; padding: 5px 12px; white-space: nowrap; }
+.app-back:hover { border-color: var(--app-accent); }
+
+/* 편집 화면: 에디터의 붙어 다니는 도구 모음·패널을 머리 막대 아래로 */
+.app-editor .le-toolbar { top: 60px; }
+.app-editor .le-panel { top: 72px; max-height: calc(100vh - 92px); }
+
+/* 시작 화면 */
+.home { max-width: 1120px; margin: 0 auto; padding: 44px 20px 72px; display: grid; gap: 28px; }
+.home-hero h1 { margin: 0; font-family: var(--app-serif); font-weight: 900; font-size: clamp(28px, 4vw, 40px); line-height: 1.3; }
+.home-hero p { margin: 8px 0 0; max-width: 60ch; color: var(--app-muted); font-size: 15px; }
+.home-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 28px; align-items: start; }
+.home-templates { display: grid; gap: 26px; }
+.home h2 { margin: 0 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--app-brass-ink); }
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.card { display: grid; gap: 6px; align-content: start; padding: 16px 18px; text-align: left; background: var(--app-surface); color: inherit; font: inherit; border: 1px solid var(--app-line); border-radius: 12px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+.card:hover { border-color: var(--app-accent); box-shadow: 0 8px 24px rgba(20, 30, 50, 0.08); }
+.card b { font-family: var(--app-serif); font-size: 17px; }
+.card span { color: var(--app-muted); font-size: 13px; }
+.home-side { position: sticky; top: 72px; display: grid; gap: 16px; }
+.home-side section { background: var(--app-surface); border: 1px solid var(--app-line); border-radius: 12px; padding: 16px; }
+.recent ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 320px; overflow-y: auto; }
+.recent li { display: flex; align-items: center; gap: 6px; }
+.recent a { flex: 1; min-width: 0; display: grid; gap: 1px; padding: 8px 10px; border-radius: 8px; color: inherit; text-decoration: none; }
+.recent a:hover { background: var(--app-surface-2); }
+.recent a b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.recent a span { color: var(--app-muted); font-size: 12px; }
+.recent button { border: 0; background: none; padding: 6px; color: var(--app-muted); font: inherit; font-size: 12px; cursor: pointer; }
+.recent button:hover { color: var(--app-danger); }
+.side-btn { box-sizing: border-box; display: grid; gap: 1px; width: 100%; padding: 10px 12px; text-align: left; background: var(--app-surface); color: inherit; font: inherit; font-weight: 600; border: 1px solid var(--app-line); border-radius: 9px; cursor: pointer; }
+.side-btn + .side-btn { margin-top: 8px; }
+.side-btn small { font-weight: 400; color: var(--app-muted); font-size: 12px; }
+.side-btn:hover { border-color: var(--app-accent); }
+
+@media (max-width: 860px) {
+  .home-grid, .cards { grid-template-columns: 1fr; }
+  .home-side { position: static; }
+  .app-note { display: none; }
+  .app-editor .le-toolbar { top: 56px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+}
