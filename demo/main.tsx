@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { LegalEditor, clauses, fromFile, groupClauses, templates } from '../src'
 import { getDoc, listDocs, newDoc, removeDoc, saveDoc, type Doc } from './store'
+import { Brand, Guide, guides } from './guide'
 import './app.css'
 
 // 데모용 가짜 검색 결과 — 실제 판례가 아님(2099년 사건번호). 실제 연결은 examples/law-go-kr-proxy 참고
@@ -40,14 +41,10 @@ const ago = (t: number) => {
   return new Date(t).toLocaleDateString('ko-KR')
 }
 
-const Brand = () => (
-  <a href="#" className="app-brand">
-    <span className="app-seal" aria-hidden="true">
-      너
-    </span>
-    너홀로프로
-  </a>
-)
+const startGuide = (doc: Doc) => {
+  saveDoc(doc)
+  location.hash = `#/guide/${doc.id}`
+}
 
 function Home() {
   const [docs, setDocs] = useState(listDocs)
@@ -86,12 +83,28 @@ function Home() {
               <section key={category} aria-label={category}>
                 <h2>{category}</h2>
                 <div className="cards">
-                  {items.map((t) => (
-                    <button key={t.id} type="button" className="card" onClick={() => openDoc(newDoc(t.title, t.html))}>
-                      <b>{t.title}</b>
-                      <span>{t.description}</span>
-                    </button>
-                  ))}
+                  {items.map((t) =>
+                    guides[t.id] ? (
+                      // 질문 흐름이 있는 서류: 질문에 답하며 쓰기가 먼저, 익숙하면 바로 편집
+                      <div key={t.id} className="card has-guide">
+                        <b>{t.title}</b>
+                        <span>{t.description}</span>
+                        <div className="card-actions">
+                          <button type="button" className="card-primary" onClick={() => startGuide(newDoc(t.title, t.html, t.id))}>
+                            질문에 답하며 쓰기
+                          </button>
+                          <button type="button" className="card-link" onClick={() => openDoc(newDoc(t.title, t.html, t.id))}>
+                            바로 편집
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button key={t.id} type="button" className="card" onClick={() => openDoc(newDoc(t.title, t.html, t.id))}>
+                        <b>{t.title}</b>
+                        <span>{t.description}</span>
+                      </button>
+                    ),
+                  )}
                 </div>
               </section>
             ))}
@@ -205,9 +218,11 @@ function App() {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [hash])
-  const id = hash.match(/^#\/d\/(.+)$/)?.[1]
+  const [, view, id] = hash.match(/^#\/(d|guide)\/(.+)$/) ?? []
   const doc = id ? getDoc(id) : undefined
-  return doc ? <EditorPage key={doc.id} doc={doc} /> : <Home />
+  if (!doc) return <Home />
+  if (view === 'guide' && doc.templateId && guides[doc.templateId]) return <Guide key={doc.id} doc={doc} />
+  return <EditorPage key={doc.id} doc={doc} />
 }
 
 createRoot(document.getElementById('root')!).render(<App />)
