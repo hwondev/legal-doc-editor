@@ -66,6 +66,76 @@ const readActive = (e: Editor) => ({
   bold: e.isActive('bold'),
 })
 
+// 문서 구조 목차: 제목·소제목·조와 그 아래 비어 있는 빈칸 수 (pos는 제목 문단 위치)
+type OutlineItem = { pos: number; level: number; text: string; blanks: number }
+const outlineOf = (doc: Editor['state']['doc'], filled: Values): OutlineItem[] => {
+  const items: OutlineItem[] = []
+  let article = 0
+  doc.forEach((node, pos) => {
+    if (node.type.name === 'heading') {
+      const level: number = node.attrs.level
+      const text = node.textContent.trim()
+      items.push({ pos, level, text: level === 2 ? `제${++article}조 ${text}` : text || '(제목 없음)', blanks: 0 })
+    }
+    const last = items[items.length - 1]
+    if (!last) return
+    node.descendants((n) => {
+      if (n.type.name === 'variable' && !filled[n.attrs.name]?.trim()) last.blanks++
+    })
+  })
+  return items
+}
+
+// A4 한 쪽의 본문 높이: 297mm − 위아래 여백 20mm씩 (legal.css의 A4 종이·@page와 같은 값)
+const PAGE_BODY_PX = (257 * 96) / 25.4
+const PAGE_MARGIN_PX = (20 * 96) / 25.4
+
+function Outline({ editor, filled }: { editor: Editor; filled: Values }) {
+  const tracked = useEditorState({ editor, selector: ({ editor: e }) => e && outlineOf(e.state.doc, filled) })
+  const items = tracked ?? outlineOf(editor.state.doc, filled)
+  const [pages, setPages] = useState(1)
+  // 목차가 문서보다 먼저 그려져서 처음엔 편집 화면이 아직 페이지에 붙어 있지 않음 → 붙은 뒤에만 잼
+  const measure = () => {
+    const el = editor.isDestroyed ? null : editor.view.dom
+    if (el?.isConnected) setPages(Math.max(1, Math.ceil((el.scrollHeight - 2 * PAGE_MARGIN_PX) / PAGE_BODY_PX)))
+  }
+  useEffect(measure) // 입력값이 바뀌어 다시 그려질 때 (빈칸 글자 길이로 줄 수가 바뀜)
+  useEffect(() => {
+    const frame = requestAnimationFrame(measure)
+    editor.on('update', measure)
+    window.addEventListener('resize', measure)
+    return () => {
+      cancelAnimationFrame(frame)
+      editor.off('update', measure)
+      window.removeEventListener('resize', measure)
+    }
+  }, [editor])
+  const go = (pos: number) => {
+    editor.chain().focus().setTextSelection(pos + 1).run()
+    ;(editor.view.nodeDOM(pos) as HTMLElement | null)?.scrollIntoView({ block: 'start' })
+  }
+  return (
+    <nav className="le-outline" aria-label="문서 구조">
+      <h2>문서 구조</h2>
+      {items.length === 0 ? (
+        <p className="le-hint">제목·소제목·조를 넣으면 목차가 생겨요.</p>
+      ) : (
+        <ol>
+          {items.map((item) => (
+            <li key={item.pos} data-level={item.level}>
+              <button type="button" onClick={() => go(item.pos)} title={item.blanks ? `빈칸 ${item.blanks}개 남음` : undefined}>
+                <span>{item.text}</span>
+                {item.blanks > 0 && <em aria-label={`빈칸 ${item.blanks}개`}>{item.blanks}</em>}
+              </button>
+            </li>
+          ))}
+        </ol>
+      )}
+      <p className="le-outline-pages">A4 예상 {pages}쪽</p>
+    </nav>
+  )
+}
+
 // 도구 모음의 펼침 메뉴 (더보기·내보내기). Esc·바깥 클릭으로 닫고 ↑↓로 항목 이동, 닫으면 여는 버튼으로 초점이 돌아감
 function Menu({ label, title, className, align = 'left', children }: { label: ReactNode; title?: string; className?: string; align?: 'left' | 'right'; children: (close: () => void) => ReactNode }) {
   const [open, setOpen] = useState(false)
@@ -272,6 +342,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
 
   return (
     <div className="le-root">
+      {editor && <Outline editor={editor} filled={shown} />}
       <div className="le-main">
         {editable && editor && active && (
           <div className="le-toolbar" role="toolbar" aria-label="서식">

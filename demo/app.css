@@ -30,7 +30,7 @@ body { margin: 0; background: var(--app-desk); color: var(--app-ink); font: 14px
 
 /* 편집 화면: 에디터의 붙어 다니는 도구 모음·패널을 머리 막대 아래로 */
 .app-editor .le-toolbar { top: 60px; }
-.app-editor .le-panel { top: 72px; max-height: calc(100vh - 92px); }
+.app-editor .le-panel, .app-editor .le-outline { top: 72px; max-height: calc(100vh - 92px); }
 
 /* 시작 화면 */
 .home { max-width: 1120px; margin: 0 auto; padding: 44px 20px 72px; display: grid; gap: 28px; }
