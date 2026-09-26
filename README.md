@@ -91,6 +91,22 @@ export default function Page() {
 - 그래도 WASM을 못 찾으면 `node_modules/@rhwp/core/rhwp_bg.wasm`을 정적 폴더에 복사하고 주소를 넘겨요: `<LegalEditor hwpWasmUrl="/rhwp_bg.wasm" />`
 - 만든 파일은 다시 읽었을 때 제목·조항·번호·표·글자가 그대로인지 검사하지만, **한글 프로그램에서 열리는지는 직접 확인**해 주세요.
 
+### 색·글꼴 바꾸기
+
+화면 색과 글꼴은 CSS 변수(`--le-*`)로 정해져 있어요. 쓰는 쪽에서 덮어쓰면 돼요.
+
+```css
+.le-root {
+  --le-accent: #0f5132; /* 주요 버튼·켜진 상태 (기본 남색 #1f3050) */
+  --le-brass: #b5832a;  /* 빈칸 밑줄·진행 표시 (기본 황동 #a07c3b) */
+  --le-desk: #eceee9;   /* 문서 뒤 바탕 */
+  --le-serif: 'Nanum Myeongjo', serif; /* 문서 본문 */
+  --le-sans: 'Pretendard', sans-serif;  /* 화면 글자 */
+}
+```
+
+기본 글꼴은 문서 본문 [Noto Serif KR](https://fonts.google.com/noto/specimen/Noto+Serif+KR), 화면 글자 [IBM Plex Sans KR](https://fonts.google.com/specimen/IBM+Plex+Sans+KR)이에요. 라이브러리는 글꼴 파일을 불러오지 않으니, 쓰려면 페이지에서 불러와 주세요(없으면 시스템 명조·고딕으로 보여요).
+
 ### 오른쪽 패널
 
 입력값·템플릿·조항 라이브러리·판례 검색은 오른쪽 패널에 섹션으로 모여 있어요. 섹션 제목을 누르면 접고 펼 수 있고(처음에는 모두 펼쳐져 있어요), 접은 섹션은 문서를 고쳐도 접힌 채로 있어요.

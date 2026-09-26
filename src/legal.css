@@ -6,20 +6,46 @@
   suffix: ' ';
 }
 
+/*
+ * 디자인 토큰 — 쓰는 쪽에서 덮어써 색·글꼴을 바꿀 수 있음 (예: .le-root { --le-accent: #0b5; })
+ * :where()라서 우선순위가 0 — 어떤 선택자로 덮어써도 이김
+ * 종이 문서라 밝은 화면 하나로 둠
+ */
+:where(.le-root, .legal-doc) {
+  --le-accent: #1f3050; /* 남색: 주요 버튼·켜진 상태 */
+  --le-accent-ink: #ffffff;
+  --le-brass: #a07c3b; /* 황동: 빈칸·진행 */
+  --le-brass-ink: #8c6a2e;
+  --le-brass-soft: #fbf5e6;
+  --le-desk: #e6e7e2; /* 문서 뒤 바탕 */
+  --le-paper: #ffffff;
+  --le-surface: #ffffff;
+  --le-surface-2: #f5f5f1;
+  --le-line: #d4d6cf;
+  --le-line-soft: #e5e6e0;
+  --le-ink: #1b2433;
+  --le-muted: #6b7280;
+  --le-danger: #b42318;
+  --le-link: #2d4f8a;
+  --le-radius: 8px;
+  --le-serif: 'Noto Serif KR', 'Nanum Myeongjo', 'AppleMyungjo', 'Batang', serif;
+  --le-sans: 'IBM Plex Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+}
+
 /* 문서 본문 — 에디터 안에서도, fillTemplate 결과를 렌더할 때도 같은 클래스 */
 .legal-doc {
   counter-reset: le-article le-n1 le-n2 le-n3 le-n4 le-ev1 le-ev2 le-ev3;
   max-width: 760px;
   margin: 0 auto;
   padding: 56px 64px;
-  background: #fff;
-  color: #111;
-  font-family: 'Noto Serif KR', 'Nanum Myeongjo', 'Batang', serif;
+  background: var(--le-paper);
+  color: var(--le-ink);
+  font-family: var(--le-serif);
   font-size: 15px;
   line-height: 1.85;
   outline: none;
 }
-.legal-doc h1 { text-align: center; font-size: 1.6em; letter-spacing: 0.25em; margin: 0 0 1.6em; }
+.legal-doc h1 { text-align: center; font-size: 1.6em; font-weight: 900; letter-spacing: 0.25em; margin: 0 0 1.6em; }
 .legal-doc h2 { counter-increment: le-article; font-size: 1em; margin: 1.6em 0 0.3em; }
 .legal-doc h2::before { content: '제' counter(le-article) '조 '; }
 .legal-doc p { margin: 0 0 0.4em; }
@@ -51,67 +77,80 @@
 .legal-doc > p[data-evidence="갑"][data-evidence-start]::before { counter-increment: none; counter-set: le-ev1 var(--le-ev-start); }
 .legal-doc > p[data-evidence="을"][data-evidence-start]::before { counter-increment: none; counter-set: le-ev2 var(--le-ev-start); }
 .legal-doc > p[data-evidence="병"][data-evidence-start]::before { counter-increment: none; counter-set: le-ev3 var(--le-ev-start); }
-/* 본문 호증 참조(evidence.ts): 증거 번호를 따라 글자가 바뀜. 가리키던 증거가 없으면 빨간 밑줄 */
-.legal-doc .le-ref { border-bottom: 1px dotted #9aa5b1; }
-.legal-doc .le-ref[data-missing] { border-bottom: 2px solid #d9534f; color: #b52b27; }
-.legal-doc .le-ref.ProseMirror-selectednode { background: #e5edff; }
+/* 본문 호증 참조(evidence.ts): 증거 번호를 따라 글자가 바뀜. 가리키던 증거가 없으면 붉은 밑줄 */
+.legal-doc .le-ref { color: var(--le-accent); border-bottom: 1px dotted var(--le-accent); }
+.legal-doc .le-ref[data-missing] { border-bottom: 2px solid var(--le-danger); color: var(--le-danger); }
+.legal-doc .le-ref.ProseMirror-selectednode { background: var(--le-brass-soft); }
 /* 판례·법령 인용 — 본문 데이터는 그대로 두고 화면에서만 밑줄·링크를 덧입힘 (citation.ts) */
-.legal-doc .le-cite { color: inherit; text-decoration: underline dotted #3a56b4; text-underline-offset: 3px; cursor: pointer; }
-.legal-doc .le-cite:hover { background: #eef2ff; }
+.legal-doc .le-cite { color: inherit; text-decoration: underline dotted var(--le-link); text-underline-offset: 3px; cursor: pointer; }
+.legal-doc .le-cite:hover { background: var(--le-surface-2); }
 
 .legal-doc .tableWrapper { overflow-x: auto; }
 .legal-doc table { width: 100%; border-collapse: collapse; margin: 0.6em 0; font-size: 0.93em; }
-.legal-doc td, .legal-doc th { border: 1px solid #555; padding: 3px 6px; vertical-align: top; }
+.legal-doc td, .legal-doc th { border: 1px solid var(--le-ink); padding: 3px 6px; vertical-align: top; }
 .legal-doc td p, .legal-doc th p { margin: 0; }
-.legal-doc .selectedCell { background: #e5edff; }
+.legal-doc .selectedCell { background: var(--le-brass-soft); }
 
-/* 에디터 UI */
-.le-root { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 16px; padding: 16px; background: #eef0f3; font: 14px/1.5 system-ui, sans-serif; }
-.le-main { min-width: 0; }
-.le-toolbar { position: sticky; top: 0; z-index: 1; display: flex; flex-wrap: wrap; gap: 4px; max-width: 760px; margin: 0 auto 8px; padding: 6px; background: #fff; border-radius: 8px; box-shadow: 0 1px 2px #0001; }
-.le-toolbar button, .le-toolbar .le-btn { padding: 4px 10px; border: 1px solid #d0d4da; border-radius: 6px; background: #fff; cursor: pointer; font: inherit; }
-.le-toolbar button:hover { background: #f3f5f8; }
+/* 빈칸(변수): 채운 값은 황동 밑줄, 비어 있으면 점선 칸 */
+.le-var { border-bottom: 1.5px solid var(--le-brass); }
+.le-var--empty { border: 1px dashed var(--le-brass); border-radius: 3px; padding: 0 4px; background: var(--le-brass-soft); color: var(--le-brass-ink); font-family: var(--le-sans); font-size: 0.82em; }
+
+/* ── 에디터 화면 ───────────────────────── */
+.le-root { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; padding: 20px; background: var(--le-desk); color: var(--le-ink); font: 14px/1.55 var(--le-sans); }
+.le-main { min-width: 0; display: grid; gap: 14px; align-content: start; }
+.le-main .legal-doc { box-shadow: 0 1px 0 var(--le-line), 0 12px 32px rgba(20, 30, 50, 0.1); min-height: 900px; }
+.le-root :focus-visible { outline: 2px solid var(--le-accent); outline-offset: 2px; }
+.le-root button { font: inherit; color: inherit; cursor: pointer; }
+.le-root button:disabled { cursor: default; opacity: 0.5; }
+.le-root input { font: inherit; color: var(--le-ink); background: var(--le-surface); border: 1px solid var(--le-line); border-radius: 7px; padding: 7px 10px; min-width: 0; }
+.le-root input:focus { outline: none; border-color: var(--le-accent); box-shadow: 0 0 0 3px var(--le-brass-soft); }
+.le-root input::placeholder { color: #9aa0a8; }
+
+/* 도구 모음 */
+.le-toolbar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 4px; max-width: 760px; width: 100%; margin: 0 auto; padding: 5px; background: var(--le-surface); border: 1px solid var(--le-line); border-radius: 10px; box-shadow: 0 2px 8px rgba(20, 30, 50, 0.06); }
+.le-toolbar button, .le-toolbar .le-btn { border: 0; background: none; border-radius: 6px; padding: 5px 9px; white-space: nowrap; }
+.le-toolbar button:hover, .le-toolbar .le-btn:hover { background: var(--le-surface-2); }
+.le-toolbar button[aria-pressed='true'] { background: var(--le-accent); color: var(--le-accent-ink); }
+.le-toolbar .le-btn { cursor: pointer; }
 .le-spacer { flex: 1; }
-.le-main .legal-doc { box-shadow: 0 1px 4px #0002; min-height: 900px; }
 
-.le-var { padding: 0 3px; border-radius: 3px; background: #e5edff; color: #1d3f94; }
-.le-var--empty { background: #fff1c2; color: #8a5a00; }
-
-.le-panel { align-self: start; position: sticky; top: 16px; padding: 14px; background: #fff; border-radius: 8px; box-shadow: 0 1px 2px #0001; }
+/* 오른쪽 패널 */
+.le-panel { align-self: start; position: sticky; top: 20px; max-height: calc(100vh - 40px); overflow-y: auto; display: grid; gap: 4px; padding: 6px 16px 14px; background: var(--le-surface); border: 1px solid var(--le-line); border-radius: 12px; }
+.le-panel > details { padding-top: 10px; }
+.le-panel > details + details { border-top: 1px solid var(--le-line-soft); }
 /* 패널 섹션 제목 — <details>를 여닫는 <summary> */
-.le-panel summary { margin: 0 0 10px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.le-panel summary { margin: 0 0 10px; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; color: var(--le-muted); cursor: pointer; }
 .le-panel details:not([open]) > summary { margin-bottom: 0; }
-.le-panel label { display: grid; gap: 3px; margin-bottom: 10px; color: #444; font-size: 13px; }
-.le-panel input { padding: 6px 8px; border: 1px solid #d0d4da; border-radius: 6px; font: inherit; }
-.le-hint { margin: 0; color: #777; font-size: 13px; }
+.le-panel label { display: grid; gap: 4px; margin-bottom: 10px; color: var(--le-muted); font-size: 12.5px; }
+.le-hint { margin: 0; color: var(--le-muted); font-size: 12.5px; }
 
 /* 판례 검색 (searchCases) */
-.le-cases { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e3e6ea; }
-.le-cases-bar { display: flex; gap: 4px; margin-bottom: 8px; }
-.le-cases-bar input { flex: 1; min-width: 0; }
-.le-cases-bar button, .le-case-list button { padding: 4px 8px; border: 1px solid #d0d4da; border-radius: 6px; background: #fff; cursor: pointer; font: inherit; }
+.le-cases-bar { display: flex; gap: 6px; margin-bottom: 8px; }
+.le-cases-bar input { flex: 1; }
+.le-cases-bar button { border: 0; border-radius: 7px; padding: 7px 12px; background: var(--le-accent); color: var(--le-accent-ink); font-weight: 600; }
 .le-case-list { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
 .le-case-list li { display: grid; gap: 2px; }
-.le-case-list button { display: grid; gap: 2px; text-align: left; font-size: 12px; }
-.le-case-list button:hover:not(:disabled) { background: #f3f5f8; }
-.le-case-list span, .le-case-list small { color: #555; }
-.le-case-list a { justify-self: end; color: #3a56b4; font-size: 12px; }
+.le-case-list button { display: grid; gap: 2px; text-align: left; font-size: 12px; padding: 8px 10px; border: 1px solid var(--le-line); border-radius: 8px; background: var(--le-surface); }
+.le-case-list button:hover:not(:disabled) { border-color: var(--le-accent); }
+.le-case-list span, .le-case-list small { color: var(--le-muted); }
+.le-case-list a { justify-self: end; color: var(--le-link); font-size: 12px; }
 
-/* 조항 라이브러리 (clauses) */
-.le-clauses { margin-top: 16px; padding-top: 12px; border-top: 1px solid #e3e6ea; }
-.le-clauses > input { width: 100%; box-sizing: border-box; margin-bottom: 6px; }
-.le-clause-list { display: grid; gap: 4px; max-height: 280px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
-.le-clause-list button { width: 100%; padding: 4px 8px; border: 1px solid #d0d4da; border-radius: 6px; background: #fff; cursor: pointer; text-align: left; font: inherit; font-size: 12px; }
-.le-clause-list button:hover:not(:disabled) { background: #f3f5f8; }
-.le-clause-cats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
-.le-clause-cats button { padding: 2px 8px; border: 1px solid #d0d4da; border-radius: 999px; background: #fff; cursor: pointer; font: inherit; font-size: 12px; }
-.le-clause-cats button span { color: #888; }
-.le-clause-cats button[aria-pressed="true"] { border-color: #3a56b4; background: #eef2ff; color: #1d3f94; }
-.le-clause-group { margin-top: 6px; color: #3a56b4; font-size: 11px; font-weight: 600; }
+/* 템플릿·조항 라이브러리 */
+.le-clauses > input { width: 100%; box-sizing: border-box; margin-bottom: 8px; }
+.le-clause-list { display: grid; gap: 2px; max-height: 280px; overflow-y: auto; margin: 0; padding: 0; list-style: none; }
+.le-clause-list button { width: 100%; padding: 6px 9px; border: 0; border-radius: 6px; background: none; text-align: left; font-size: 13px; }
+.le-clause-list button:hover:not(:disabled) { background: var(--le-surface-2); }
+.le-clause-cats { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.le-clause-cats button { padding: 2px 9px; border: 1px solid var(--le-line); border-radius: 999px; background: var(--le-surface); font-size: 12px; }
+.le-clause-cats button span { color: var(--le-muted); font-variant-numeric: tabular-nums; }
+.le-clause-cats button[aria-pressed='true'] { border-color: var(--le-accent); background: var(--le-accent); color: var(--le-accent-ink); }
+.le-clause-cats button[aria-pressed='true'] span { color: inherit; opacity: 0.75; }
+.le-clause-group { margin-top: 8px; padding: 0 9px; color: var(--le-brass-ink); font-size: 11px; font-weight: 600; letter-spacing: 0.04em; }
 .le-clause-group:first-child { margin-top: 0; }
 
 @media (max-width: 800px) {
-  .le-root { grid-template-columns: 1fr; }
+  .le-root { grid-template-columns: 1fr; padding: 12px; }
+  .le-panel { position: static; max-height: none; }
   .legal-doc { padding: 32px 24px; }
 }
 
@@ -119,9 +158,9 @@
   .le-printing body * { visibility: hidden; }
   .le-printing .legal-doc, .le-printing .legal-doc * { visibility: visible; }
   .le-printing .legal-doc { position: absolute; top: 0; left: 0; width: 100%; max-width: none; padding: 0; box-shadow: none; }
-  .le-printing .le-var { padding: 0; background: none; color: inherit; }
+  .le-printing .le-var { border: 0; }
   .le-printing .le-cite { text-decoration: none; background: none; }
   .le-printing .le-ref { border: 0; color: inherit; background: none; }
   /* 빈 값은 손으로 쓰는 밑줄 칸 */
-  .le-printing .le-var--empty { color: transparent; border-bottom: 1px solid #000; }
+  .le-printing .le-var--empty { color: transparent; border: 0; border-bottom: 1px solid #000; border-radius: 0; background: none; }
 }
