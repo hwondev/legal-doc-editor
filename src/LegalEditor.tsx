@@ -1,5 +1,5 @@
-import { Fragment, useEffect, useState } from 'react'
-import { EditorContent, useEditor, type Editor } from '@tiptap/react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
+import { EditorContent, useEditor, useEditorState, type Editor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { TableKit } from '@tiptap/extension-table'
 import { Variable, toChips, type Values } from './variable'
@@ -55,6 +55,57 @@ function download(blob: Blob, name: string) {
   a.download = name
   a.click()
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
+}
+
+// 커서 위치의 서식 — 도구 모음 버튼을 켜서 보여 줄 때 씀
+const readActive = (e: Editor) => ({
+  block: ([1, 2, 3] as const).find((level) => e.isActive('heading', { level })) ?? 0,
+  num: (e.getAttributes('paragraph').num as number | null) ?? null,
+  evidence: (e.getAttributes('paragraph').evidence as string | null) ?? null,
+  list: e.isActive('orderedList'),
+  bold: e.isActive('bold'),
+})
+
+// 도구 모음의 펼침 메뉴 (더보기·내보내기). Esc·바깥 클릭으로 닫고 ↑↓로 항목 이동, 닫으면 여는 버튼으로 초점이 돌아감
+function Menu({ label, title, className, align = 'left', children }: { label: ReactNode; title?: string; className?: string; align?: 'left' | 'right'; children: (close: () => void) => ReactNode }) {
+  const [open, setOpen] = useState(false)
+  const root = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    root.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+    const onDown = (e: PointerEvent) => {
+      if (!root.current?.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('pointerdown', onDown)
+    return () => document.removeEventListener('pointerdown', onDown)
+  }, [open])
+  const close = () => {
+    setOpen(false)
+    root.current?.querySelector<HTMLElement>('[aria-haspopup]')?.focus()
+  }
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Escape' && open) {
+      e.stopPropagation()
+      close()
+    }
+    if (!open || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return
+    e.preventDefault()
+    const items = [...root.current!.querySelectorAll<HTMLElement>('[role="menuitem"]')]
+    const i = items.indexOf(document.activeElement as HTMLElement)
+    items[(i + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length]?.focus()
+  }
+  return (
+    <div className="le-menu" ref={root} onKeyDown={onKeyDown}>
+      <button type="button" className={className} title={title} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)}>
+        {label}
+      </button>
+      {open && (
+        <div className={`le-menu-list le-menu-${align}`} role="menu">
+          {children(close)}
+        </div>
+      )}
+    </div>
+  )
 }
 
 // 패널 목록 (템플릿·조항 라이브러리): 검색칸(분류·제목), 분류 칩(개수), 분류별 묶음. 누르면 onPick
@@ -130,6 +181,12 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
     },
   })
 
+  // 도구 모음 켜짐 표시: 커서가 있는 곳의 서식 (선택이 바뀔 때마다 다시 계산, 값이 같으면 다시 그리지 않음)
+  // useEditorState는 첫 트랜잭션 전까지 에디터가 없던 때의 스냅숏(null)을 돌려주므로, 그동안은 에디터에서 바로 읽음
+  const tracked = useEditorState({ editor, selector: ({ editor: e }) => e && readActive(e) })
+  const active = tracked ?? (editor && readActive(editor))
+  const mod = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+'
+
   useEffect(() => {
     if (!editor) return
     editor.storage.variable.values = shown
@@ -143,7 +200,7 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
   }
 
   const insertVar = () => {
-    const name = window.prompt('변수 이름 (예: 갑, 계약일)')?.replace(/[{}<>"]/g, '').trim()
+    const name = window.prompt('빈칸 이름 (예: 피고 이름, 계약일) — 오른쪽 입력값에 이 이름으로 칸이 생겨요')?.replace(/[{}<>"]/g, '').trim()
     if (name) editor?.chain().focus().insertContent({ type: 'variable', attrs: { name } }).run()
   }
 
@@ -216,41 +273,96 @@ export function LegalEditor({ content = '', values: initial = {}, onChange, onVa
   return (
     <div className="le-root">
       <div className="le-main">
-        {editable && editor && (
-          <div className="le-toolbar">
-            <button type="button" onClick={() => cmd().toggleHeading({ level: 1 }).run()}>제목</button>
-            <button type="button" onClick={() => cmd().toggleHeading({ level: 3 }).run()}>소제목</button>
-            <button type="button" onClick={() => cmd().toggleHeading({ level: 2 }).run()}>조</button>
-            {['1.', '가.', '(1)', '(가)'].map((label, i) => (
-              <button key={label} type="button" title="번호 문단 — Tab·Shift+Tab 단계 변경, 맨 앞 Backspace 해제" onClick={() => toggleNum(i + 1)}>
-                {label}
+        {editable && editor && active && (
+          <div className="le-toolbar" role="toolbar" aria-label="서식">
+            {/* 문단 종류 */}
+            <select
+              aria-label="문단 종류"
+              title={`본문 ${mod}Alt+0 · 제목 ${mod}Alt+1 · 조 ${mod}Alt+2 · 소제목 ${mod}Alt+3`}
+              value={active.block}
+              onChange={(e) => {
+                const level = Number(e.target.value) as 0 | 1 | 2 | 3
+                if (level) cmd().setHeading({ level }).run()
+                else cmd().setParagraph().run()
+              }}
+            >
+              <option value={0}>본문</option>
+              <option value={1}>제목</option>
+              <option value={3}>소제목</option>
+              <option value={2}>조 (제N조)</option>
+            </select>
+            <span className="le-tb-sep" aria-hidden="true" />
+            <div className="le-tb-group" role="group" aria-label="번호">
+              {['1.', '가.', '(1)', '(가)'].map((label, i) => (
+                <button key={label} type="button" aria-pressed={active.num === i + 1} title="번호 문단 — Tab·Shift+Tab으로 단계 변경, 맨 앞에서 Backspace로 해제" onClick={() => toggleNum(i + 1)}>
+                  {label}
+                </button>
+              ))}
+              <button type="button" aria-pressed={active.list} title="계약서의 항 ①② — Tab으로 호(1. 2.)" onClick={() => cmd().toggleOrderedList().run()}>
+                항
               </button>
-            ))}
-            <button type="button" title="입증방법 갑 제N호증 자동 번호 — 누를 때마다 갑 → 을 → 해제, Enter로 다음 호증" onClick={toggleEvidence}>
-              호증
+            </div>
+            <span className="le-tb-sep" aria-hidden="true" />
+            <button type="button" aria-pressed={!!active.evidence} title="입증방법 갑 제N호증 자동 번호 — 누를 때마다 갑 → 을 → 해제, Enter로 다음 호증" onClick={toggleEvidence}>
+              {active.evidence ? `호증 ${active.evidence}` : '호증'}
             </button>
-            <button type="button" title="이 호증의 번호를 정해요 — 준비서면에서 갑 제5호증부터 시작할 때" onClick={startEvidence}>
-              호증 시작
+            <span className="le-tb-sep" aria-hidden="true" />
+            <div className="le-tb-group" role="group" aria-label="넣기">
+              <button type="button" title="오른쪽 입력값으로 채우는 빈칸 넣기 — 본문에 {{이름}}을 입력해도 돼요" onClick={insertVar}>
+                빈칸
+              </button>
+              <button type="button" title="3×3 표 넣기" onClick={() => cmd().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run()}>
+                표
+              </button>
+              <button type="button" title="선택한 숫자 → 금 37,200,000원" onClick={() => amount('소장')}>
+                금액
+              </button>
+            </div>
+            <span className="le-tb-sep" aria-hidden="true" />
+            <button type="button" aria-pressed={active.bold} aria-label="굵게" title={`굵게 ${mod}B`} onClick={() => cmd().toggleBold().run()}>
+              <b>B</b>
             </button>
-            <button type="button" onClick={() => cmd().toggleOrderedList().run()}>항</button>
-            <button type="button" onClick={() => cmd().sinkListItem('listItem').run()}>호 →</button>
-            <button type="button" onClick={() => cmd().liftListItem('listItem').run()}>← 내어쓰기</button>
-            <button type="button" onClick={() => cmd().toggleBold().run()}><b>B</b></button>
-            <button type="button" onClick={insertVar}>{'{{ }}'} 변수</button>
-            <button type="button" onClick={() => cmd().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run()}>표</button>
-            <button type="button" title="선택한 금액 → 금 37,200,000원" onClick={() => amount('소장')}>금액</button>
-            <button type="button" title="선택한 금액 → 금 삼천칠백이십만 원정(₩37,200,000)" onClick={() => amount('계약서')}>금액(한글)</button>
+            <Menu label="⋯" title="더보기">
+              {(close) => (
+                <>
+                  <button type="button" role="menuitem" onClick={() => (close(), amount('계약서'))}>
+                    금액을 한글로<small>선택한 숫자 → 금 삼천칠백이십만 원정(₩37,200,000)</small>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => (close(), startEvidence())}>
+                    호증 시작 번호<small>준비서면에서 갑 제5호증부터 시작할 때</small>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => (close(), cmd().sinkListItem('listItem').run())}>
+                    들여쓰기<small>항 → 호 · Tab</small>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => (close(), cmd().liftListItem('listItem').run())}>
+                    내어쓰기<small>호 → 항 · Shift+Tab</small>
+                  </button>
+                </>
+              )}
+            </Menu>
             <span className="le-spacer" />
-            <label className="le-btn">
+            <label className="le-btn" title=".hwp · .hwpx · .docx · .doc 파일 열기">
               열기
               <input type="file" accept=".docx,.doc,.hwp,.hwpx" hidden onChange={openFile} />
             </label>
-            <button type="button" onClick={() => save(toDocx, 'docx')}>Word 저장</button>
-            <button type="button" onClick={() => save(toHwpx, 'hwpx')}>한글(.hwpx) 저장</button>
-            <button type="button" title="HWP 5.0 — 처음 저장할 때 변환기(약 10MB)를 불러와요" onClick={() => save((d, v) => toHwp(d, v, { wasm: hwpWasmUrl }), 'hwp')}>
-              한글(.hwp) 저장
-            </button>
-            <button type="button" onClick={printDoc}>인쇄 · PDF</button>
+            <Menu label="내보내기 ▾" className="le-primary" align="right">
+              {(close) => (
+                <>
+                  <button type="button" role="menuitem" onClick={() => (close(), printDoc())}>
+                    인쇄 · PDF<small>법원에 낼 종이나 PDF — 인쇄 창에서 “PDF로 저장”</small>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => (close(), save((d, v) => toHwp(d, v, { wasm: hwpWasmUrl }), 'hwp'))}>
+                    한글 파일 (.hwp)<small>한글에서 이어서 고치기 · 처음엔 변환기(약 10MB)를 불러와요</small>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => (close(), save(toHwpx, 'hwpx'))}>
+                    한글 파일 (.hwpx)<small>한글 2014 이후 버전</small>
+                  </button>
+                  <button type="button" role="menuitem" onClick={() => (close(), save(toDocx, 'docx'))}>
+                    Word 파일 (.docx)<small>Word·구글 문서에서 고치기</small>
+                  </button>
+                </>
+              )}
+            </Menu>
           </div>
         )}
         <EditorContent editor={editor} />
